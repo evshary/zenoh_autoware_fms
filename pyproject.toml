@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "zenoh-autoware-fms"
+version = "0.1.0"
+description = ""
+authors = ["ChenYing Kuo <evshary@gmail.com>"]
+readme = "README.md"
+packages = [{include = "zenoh_autoware_fms"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.95.1"
+uvicorn = "^0.22.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
