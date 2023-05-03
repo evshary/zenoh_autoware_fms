@@ -4,15 +4,22 @@ The project is the FMS (fleet management system) prototype of Autoware based on 
 
 # Usage
 
-* Install (You need to install poetry first)
+* Prerequisite
 
 ```shell
+# Install poetry
+curl -sSL https://install.python-poetry.org | python3 -
+poetry config virtualenvs.in-project true
+
+# Install packages
+sudo apt install parallel
+# Install Python packages
 poetry install
 ```
 
-* Run API Server
+* Run Web Server & API Server
 
 ```shell
-poetry run uvicorn api_server:app --reload
+./run_server.sh
 ```
 
