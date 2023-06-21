@@ -23,3 +23,16 @@ poetry install
 ./run_server.sh
 ```
 
+# Roadmap
+
+Here are some functions we'll implement in the future:
+
+* List all available Autoware
+* Get the basic information from any Autoware (Use AD API)
+  - `/api/external/get/cpu_usage`
+  - `/api/external/get/vehicle/status`
+* Assign goal to Autoware (Use [AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/use-cases/drive-designated-position/))
+* Show the camera image from any Autoware
+* Remote teleop vehicle in any Autoware
+* Support Autoware in ROS 1 with the help of [zenoh-plugin-ros1](https://github.com/eclipse-zenoh/zenoh-plugin-ros1)
+
