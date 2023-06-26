@@ -12,4 +12,21 @@ $(document).ready(function() {
             console.log(error);
         },
     });
+    $('#list-autoware-button').click( function() {
+        $.ajax({
+            type: "GET",
+            url: api_server + 'list',
+            dataType: "json",
+            success: function(data) {
+                $('#autoware-scope-list').empty();
+                for(var i = 0 ; i < data.length ; i ++){
+                    $('#autoware-scope-list').append(`<li><a href="">${data[i].scope}</a><ul><li>address: ${data[i].address}</li></ul></li>`);
+                }
+                console.log(data);
+            },
+            error: function(error) {
+                console.log(error);
+            },
+        });
+    });
 });

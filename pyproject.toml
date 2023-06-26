@@ -10,6 +10,7 @@ packages = [{include = "zenoh_autoware_fms"}]
 python = "^3.8"
 fastapi = "^0.95.1"
 uvicorn = "^0.22.0"
+eclipse-zenoh = "^0.7.2rc0"
 
 
 [build-system]
