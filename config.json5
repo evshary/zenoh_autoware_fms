@@ -1,0 +1,12 @@
+{
+  listen: {
+    endpoints: [
+      'tcp/172.17.0.1:7447'
+    ]
+  },
+  scouting: {
+    multicast: {
+      enabled: false,
+    },
+  }
+}
