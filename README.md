@@ -23,6 +23,8 @@ poetry install
 ./run_server.sh
 ```
 
+* You can use environment [here](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_multiple_fms) to test FMS
+
 # Roadmap
 
 Here are some functions we'll implement in the future:
