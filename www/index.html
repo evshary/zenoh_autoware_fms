@@ -4,12 +4,18 @@
         <h1>Zenoh Autoware FMS</h1>
         <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
         <script type="text/javascript" src="mycontent.js"></script>
+        <!-- <link rel="stylesheet" href="mystyle.css"> -->
     </head>
     <body>
-        <div id="mycontent"></div>
-        <button id="list-autoware-button">List all autoware</button>
-        <ul>
-            <li>Autowares<ul id="autoware-scope-list"></ul></li>
-        </ul>
+        <div id="list-container">
+            <div id="mycontent"></div>
+            <button id="list-autoware-button">List all autoware</button>
+            <ul>
+                <li>Autowares<ul id="autoware-scope-list"></ul></li>
+            </ul>
+        </div>
+        <div id="status-container" style="display: none;">
+            
+        </div>
     </body>
 </html>
