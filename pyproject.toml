@@ -11,6 +11,7 @@ python = "^3.8"
 fastapi = "^0.95.1"
 uvicorn = "^0.22.0"
 eclipse-zenoh = "^0.7.2rc0"
+pycdr2 = "^1.0.0"
 
 
 [build-system]

@@ -107,6 +107,20 @@ files = [
 ]
 
 [[package]]
+name = "pycdr2"
+version = "1.0.0"
+description = "The IDL part of the CycloneDDS package as standalone version, to support packages that need CDR (de)serialisation without the Cyclone DDS API."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pycdr2-1.0.0-py3-none-any.whl", hash = "sha256:963e47351128804024dc931deaa3c4f6aea7f3d667ca8d02f61a8fd8411b7fba"},
+    {file = "pycdr2-1.0.0.tar.gz", hash = "sha256:e2b34aff7e9a536de7b4a2e367d154460d19b6319c1d1d5e068218b0dd539f7c"},
+]
+
+[package.dependencies]
+typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.9\""}
+
+[[package]]
 name = "pydantic"
 version = "1.10.7"
 description = "Data validation and settings management using python type hints"
@@ -219,4 +233,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "b4711473bb193da57ceaa064edec442ac285a846f50f3bc3f15a6ad5d1b8d35d"
+content-hash = "8fc693aa6173b158e3f5be64f436968c60baef961569f1af7946ac5977d8ad2b"
