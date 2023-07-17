@@ -194,7 +194,7 @@ $(document).ready(function() {
     /***********************************************
      *  Handle the steering wheel.
      ***********************************************/
-    const max_degree = 60;
+    const max_degree = 22.5;
 	const $handler = $('#steering-wheel');
     const radius	= $handler.outerWidth() / 2;
     var center_x	= $handler.offset().left + radius;
