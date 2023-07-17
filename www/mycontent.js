@@ -60,16 +60,16 @@ function teleop_set_angle() {
     if(scope != '---'){
         if(!isNaN($('#target-angle-text').text())){
             var sign = 1;
-            if($('#target-turn-text').text() == 'Left'){
+            if($('#target-turn-text').text() == 'Right'){
                 sign = -1;
             }
             const angle = sign * $('#target-angle-text').text();
-
+            console.log(angle);
             $.ajax({
                 type: "GET",
                 url: `${api_server}/teleop/turn?scope=${scope}&angle=${angle}`,
                 success: function(data) {
-                    console.log(data);
+                    // console.log(data);
                 },
                 error: function(error) {
                     console.log(error);
@@ -191,27 +191,94 @@ $(document).ready(function() {
         }
     });
 
-    $('#teleop-set-steering').click( function() {
-        const scope = $('#teleop-scope').text();
-        const angle = $('#teleop-steering-text').val();
-        if(scope != '---'){
-            $('#teleop-steering-text').val('');
-            if(!isNaN(angle)){
-                var turn = 'None';
-                if(angle < 0) turn = 'Left';
-                else if(angle > 0) turn = 'Right';
-                $('#target-turn-text').text(turn);
-                $('#target-angle-text').text(Math.abs(angle)); 
-                console.log(data);
-            }
-            else{
-                alert(`Steering angle should be a neumeraic value. ${velocity} is not a neumeric value.`);
-            }
+    /***********************************************
+     *  Handle the steering wheel.
+     ***********************************************/
+    const max_degree = 60;
+	const $handler = $('#steering-wheel');
+    const radius	= $handler.outerWidth() / 2;
+    var center_x	= $handler.offset().left + radius;
+	var center_y	= $handler.offset().top + radius;
+    var total_degree = 0;
+    var last_degree = 0;
+    
+    /* Get current degree of position of cursor. */
+	function get_degrees(mouse_x, mouse_y) {
+		const radians	= Math.atan2(mouse_x - center_x, mouse_y - center_y);
+		const degrees	= Math.round((radians * (180 / Math.PI) * -1) + 180);
+		return degrees;
+	}
+
+    /* Get difference of degrees. */
+    function diff_degrees(base_degree, new_degree){
+        if(new_degree - base_degree > 180){
+            return new_degree - (base_degree + 360);
+        }
+        else if(new_degree - base_degree < -180){
+            return new_degree - (360 - base_degree);
         }
         else {
-            alert('Please startup teleop first.');
+            return new_degree - base_degree;
         }
+    }
+
+    /* Disable drag animation(event) of image. */
+	$handler.on('dragstart', function(event) { 
+        event.preventDefault(); 
     });
+
+    /* Start dragging. */
+	$handler.on('mousedown', function(event) {
+		
+		/* Get the center position before dragged. */
+        center_x	= $handler.offset().left + radius;
+        center_y	= $handler.offset().top + radius;
+
+        /* Get degree of start position. */
+		const click_degrees = get_degrees(event.pageX, event.pageY);
+        last_degree = click_degrees;
+        total_degree = 0;
+
+		$(document).bind('mousemove', click_degrees, function(event) {
+            /* New position of mouse in degree. */
+			const move_degree = get_degrees(event.pageX, event.pageY);
+			
+            /* Interval between current and last degree. */
+            total_degree += diff_degrees(last_degree, move_degree);
+            last_degree = move_degree;
+
+            /* Remove start position. */
+            var degrees = diff_degrees(click_degrees, move_degree);
+            
+            /* Cannot exceed the maximum degree. */
+			if(total_degree >= max_degree){
+				degrees = max_degree;
+			}
+			else if(total_degree < -max_degree){
+				degrees = -max_degree;
+			}
+
+            /* Rotate the image of steering wheel. */
+			$handler.css('transform', 'rotate('+degrees+'deg)');
+
+            /* Record the turn and angle. */
+			if(degrees > 0){
+				$('#target-turn-text').text('Right');
+			}
+			else {
+				$('#target-turn-text').text('Left');
+			}
+			$('#target-angle-text').text(Math.abs(degrees));
+		});
+	});
+
+    /* Unbind mouse move. */
+	$(document).on('mouseup', function() {
+        $('#target-turn-text').text('None');
+        $('#target-angle-text').text(0);
+        $handler.css('transform', 'rotate('+0+'deg)');
+		$(document).unbind('mousemove');
+	});
 });
 
 
