@@ -14,8 +14,64 @@
                 <li>Autowares<ul id="autoware-scope-list"></ul></li>
             </ul>
         </div>
-        <div id="status-container" style="display: none;">
-            
+        <br>
+        <hr>
+        <br>
+        <div id="teleop-container">
+            <h2>Teleop Panel</h2>
+            <h5>Vehicle:<span id="teleop-scope" style="color: blue;">---</span></h5>
+            <div>
+                <h3>Status</h3>
+                <table>
+                    <tr>
+                        <td>Velocity</td>
+                        <td><p id="teleop-status-velocity" style="color: blue;">---</p></td>
+                    </tr>
+                    <tr>
+                        <td>Gear</td>
+                        <td><p id="teleop-status-gear" style="color: blue;">---</p></td>
+                    </tr>
+                    <tr>
+                        <td>Steering</td>
+                        <td><p id="teleop-status-steer" style="color: blue;">---</p></td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <h3>Gear</h3>
+                <select name="gear" id="teleop-gear-selector">
+                    <option value="None">None</option>
+                    <option value="Parking">Parking</option>
+                    <option value="Reverse">Reverse</option>
+                    <option value="Neutral">Neutral</option>
+                    <option value="Drive">Drive</option>
+                    <option value="Low">Low</option>
+                </select>
+                <button id="teleop-set-gear">Set</button>
+            </div>
+            <div>
+                <h3>Velocity</h3>
+                <input type="text" name="velocity" id="teleop-velocity-text"> km/hr 
+                <button id="teleop-set-velocity">Set</button>
+            </div>
+            <div>
+                <h3>Steering</h3>
+                <h4>Current target steering</h4>
+                <table>
+                    <tr>
+                        <td>Turn</td>
+                        <td><p id="target-turn-text" style="color: blue;">---</p></td>
+                    </tr>
+                    <tr>
+                        <td>Degree</td>
+                        <td><p id="target-angle-text" style="color: blue;">---</p></td>
+                    </tr>
+                </table>
+                <br>
+                <br>
+                <img id="steering-wheel" src="steering-wheel.png" style="height: 160px; width: 160px;">
+                <a href="https://www.flaticon.com/free-icons/drive" title="drive icons">Drive icons created by Freepik - Flaticon</a>
+            </div>
         </div>
     </body>
 </html>

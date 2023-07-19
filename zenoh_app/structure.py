@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pycdr2 import IdlStruct,Enum
-from pycdr2.types import int8, uint8, int32, uint32, float32, float64, sequence
+from pycdr2.types import int8, uint8, int32, int64, uint32, uint64, float32, float64, sequence
 
 @dataclass
 class Time(IdlStruct, typename="Time"):
@@ -44,7 +44,7 @@ class Steering(IdlStruct, typename="Steering"):
 
 @dataclass
 class TurnSignal(IdlStruct, typename="TurnSignal"):
-    class SIGNAL(Enum):
+    class TURN(Enum):
         NONE = 0
         LEFT = 1
         RIGHT = 2
@@ -73,3 +73,61 @@ class VehicleStatus(IdlStruct, typename="VehicleStatus"):
 class vehicle_status(IdlStruct, typename="vehicle_status"):
     stamp: Time
     status: VehicleStatus
+
+@dataclass
+class ControlCommand(IdlStruct, typename="ControlCommand"):
+    steering_angle: float64
+    steering_angle_velocity: float64
+    throttle: float64
+    brake: float64
+
+@dataclass
+class ControlCommandStamped(IdlStruct, typename="ControlCommandStamped"):
+    stamp: Time
+    control: ControlCommand
+
+@dataclass
+class GearShiftStamped(IdlStruct, typename="GearShiftStamped"):
+    stamp: Time
+    gear_shift: GearShift
+
+@dataclass
+class TurnSignalStamped(IdlStruct, typename="GearShiftStamped"):
+    stamp: Time
+    turn_signal: TurnSignal
+    
+@dataclass
+class GateMode(IdlStruct, typename="GateMode"):
+    class MODE(Enum):
+        AUTO = 0
+        EXTERNAL = 1
+    data: uint8
+
+@dataclass
+class AckermannLateralCommand(IdlStruct, typename="AckermannLateralCommand"):
+    stamp: Time
+    steering_tire_angle: float32
+    steering_tire_rotation_rate: float32
+
+@dataclass
+class LongitudinalCommand(IdlStruct, typename="LongitudinalCommand"):
+   stamp: Time
+   speed: float32
+   acceleration: float32
+   jerk: float32
+
+@dataclass
+class AckermannControlCommand(IdlStruct, typename="AckermannControlCommand"):
+    stamp: Time
+    lateral: AckermannLateralCommand
+    longitudinal: LongitudinalCommand
+
+@dataclass
+class ServiceHeader(IdlStruct, typename="ServiceHeader"):
+    guid: int64
+    seq: uint64
+
+@dataclass
+class EngageReq(IdlStruct, typename="EngageReq"):
+    header: ServiceHeader
+    engage: bool
