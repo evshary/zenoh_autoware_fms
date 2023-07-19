@@ -25,18 +25,6 @@ poetry install
 
 * You can use environment [here](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_multiple_fms) to test FMS
 
-# Roadmap
+# Project
 
-Here are some functions we'll implement in the future:
-
-* Use docker-compose to run multiple Autoware (planning simulator) with zenoh-bridge-dds at the same time.
-* List all available Autoware
-* Get the basic information from any Autoware (Use AD API)
-  - `/api/external/get/cpu_usage`
-  - `/api/external/get/vehicle/status`
-* Assign goal to Autoware (Use [AD API](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/use-cases/drive-designated-position/))
-* Manage multiple vehicles in the same Carla simulator
-* Show the camera image from any Autoware
-* Remote teleop vehicle in any Autoware
-* Support Autoware in ROS 1 with the help of [zenoh-plugin-ros1](https://github.com/eclipse-zenoh/zenoh-plugin-ros1)
-
+Please check our roadmap in [GitHub Project](https://github.com/users/evshary/projects/2)
