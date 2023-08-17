@@ -1,17 +1,7 @@
 from dataclasses import dataclass
 from pycdr2 import IdlStruct,Enum
 from pycdr2.types import int8, uint8, int32, int64, uint32, uint64, float32, float64, sequence
-
-@dataclass
-class Time(IdlStruct, typename="Time"):
-    sec: int32
-    nanosec: uint32
-
-@dataclass
-class Vector3(IdlStruct, typename="Vector3"):
-    x: float64
-    y: float64
-    z: float64
+from zenoh_ros_type import Time, Vector3
 
 @dataclass
 class CpuStatus(IdlStruct, typename="CpuStatus"):
