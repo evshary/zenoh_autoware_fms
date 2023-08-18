@@ -2,12 +2,12 @@ import zenoh
 import time
 from pycdr2 import Dict
 from threading import Thread, Event
-from .structure import *
 from zenoh_ros_type.rcl_interfaces import Time
-from zenoh_ros_type.autoware_auto_msgs.autoware_auto_control_msgs import AckermannControlCommand, LongitudinalCommand, AckermannLateralCommand
-from zenoh_ros_type.autoware_auto_msgs.autoware_auto_vehicle_msgs import EngageRequest
+from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, LongitudinalCommand, AckermannLateralCommand
+from zenoh_ros_type.autoware_auto_msgs import EngageRequest
 from zenoh_ros_type.service import ServiceHeader
 from zenoh_ros_type.tier4_autoware_msgs import GateMode
+from zenoh_ros_type.tier4_autoware_msgs import GearShift, GearShiftStamped, VehicleStatusStamped
 
 GET_STATUS_KEY_EXPR = '/rt/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/rt/control/gate_mode_cmd'
@@ -33,10 +33,10 @@ class ManualController():
         self.target_angle = 0
 
         def callback_status(sample):
-            data = vehicle_status.deserialize(sample.payload)
+            data = VehicleStatusStamped.deserialize(sample.payload)
             self.current_velocity = data.status.twist.linear.x
             gear_val = data.status.gear_shift.data
-            self.current_gear = GearShift.GEAR(gear_val).name
+            self.current_gear = GearShift.DATA(gear_val).name
             self.current_steer = data.status.steering.data
             # print(f'Gear: {self.current_gear} | velocity: {self.current_velocity * 3600 / 1000}')
 

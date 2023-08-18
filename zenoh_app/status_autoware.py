@@ -1,8 +1,8 @@
 import zenoh
 import json
 import time
-from .structure import *
 from pycdr2 import Dict
+from zenoh_ros_type.tier4_autoware_msgs import CpuUsage, CpuStatus, GearShift, TurnSignal, VehicleStatusStamped
 
 def class2dict(instance, built_dict={}):
     ### Reference: https://stackoverflow.com/questions/63893843/how-to-convert-nested-object-to-nested-dictionary-in-python
@@ -25,7 +25,7 @@ def get_cpu_status(session, scope):
     while cpu_status_data is None:
         time.sleep(1)
         for rep in sub.receiver:
-            cpu_status_data = cpu_usage.deserialize(rep.payload)
+            cpu_status_data = CpuUsage.deserialize(rep.payload)
             break
     ### Convert object to dictionary
     cpu_status_data = class2dict(cpu_status_data)
@@ -43,7 +43,7 @@ def get_vehicle_status(session, scope):
     while vehicle_status_data is None:
         time.sleep(1)
         for rep in sub.receiver:
-            vehicle_status_data = vehicle_status.deserialize(rep.payload)
+            vehicle_status_data = VehicleStatusStamped.deserialize(rep.payload)
             break
     ### Convert object to dictionary
     vehicle_status_data = class2dict(vehicle_status_data)
@@ -58,6 +58,3 @@ if __name__ == "__main__":
     s = zenoh.open(conf)
     get_cpu_status(s, 'v1')
     get_vehicle_status(s, 'v1')
-
-
-
