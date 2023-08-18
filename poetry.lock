@@ -232,13 +232,13 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [[package]]
 name = "zenoh-ros-type"
-version = "0.1.0"
+version = "0.2.0"
 description = "Common class for ROS 2 message used by Zenoh"
 optional = false
 python-versions = "*"
 files = [
-    {file = "zenoh-ros-type-0.1.0.tar.gz", hash = "sha256:51ed2a07996a8772ae326930e8998e97cb3e15f4d5ad20e69334ab3285d27a59"},
-    {file = "zenoh_ros_type-0.1.0-py3-none-any.whl", hash = "sha256:0c0a03459ea9de83e48fe1f98bbdc487eca127eadd26f13a0a917da285fa7b7f"},
+    {file = "zenoh-ros-type-0.2.0.tar.gz", hash = "sha256:355b1f3e56beeb6052d29690428438b71bd4d5a9fcb59fef8eda5c5324b0896c"},
+    {file = "zenoh_ros_type-0.2.0-py3-none-any.whl", hash = "sha256:d1fece26ecd15ce0b8fbd03d57125e7fd4cd72bbe0e217056627bbe40479598f"},
 ]
 
 [package.dependencies]
@@ -247,4 +247,4 @@ pycdr2 = ">=1.0,<2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "391bb992bc0b17487b841a3da197d6e173b05cf5731917fd824c705ad1831319"
+content-hash = "ec5575f6db2c31cfdffa8f0bfe6360037df7cc50ffa447376b4935a4076e3b90"
