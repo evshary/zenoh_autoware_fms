@@ -1,7 +1,6 @@
 import zenoh
 import json
 import time
-import sys
 from .structure import *
 from pycdr2 import Dict
 

@@ -1,10 +1,13 @@
 import zenoh
-import json
 import time
-import sys
-from .structure import *
 from pycdr2 import Dict
 from threading import Thread, Event
+from .structure import *
+from zenoh_ros_type.rcl_interfaces import Time
+from zenoh_ros_type.autoware_auto_msgs.autoware_auto_control_msgs import AckermannControlCommand, LongitudinalCommand, AckermannLateralCommand
+from zenoh_ros_type.autoware_auto_msgs.autoware_auto_vehicle_msgs import EngageRequest
+from zenoh_ros_type.service import ServiceHeader
+from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
 GET_STATUS_KEY_EXPR = '/rt/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/rt/control/gate_mode_cmd'
@@ -76,17 +79,17 @@ class ManualController():
         ### Startup external control
         self.publisher_gate_mode.put(
             GateMode(
-                data=1
+                data=GateMode.DATA.EXTERNAL
             ).serialize()
         )
 
         self.publisher_engage.put(
-            EngageReq(
+            EngageRequest(
                 header=ServiceHeader(
                     guid=0,
                     seq=0
                 ),
-                engage=True
+                mode=True
             ).serialize()
         )
 
