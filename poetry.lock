@@ -230,7 +230,21 @@ h11 = ">=0.8"
 [package.extras]
 standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
 
+[[package]]
+name = "zenoh-ros-type"
+version = "0.2.0"
+description = "Common class for ROS 2 message used by Zenoh"
+optional = false
+python-versions = "*"
+files = [
+    {file = "zenoh-ros-type-0.2.0.tar.gz", hash = "sha256:355b1f3e56beeb6052d29690428438b71bd4d5a9fcb59fef8eda5c5324b0896c"},
+    {file = "zenoh_ros_type-0.2.0-py3-none-any.whl", hash = "sha256:d1fece26ecd15ce0b8fbd03d57125e7fd4cd72bbe0e217056627bbe40479598f"},
+]
+
+[package.dependencies]
+pycdr2 = ">=1.0,<2.0"
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "8fc693aa6173b158e3f5be64f436968c60baef961569f1af7946ac5977d8ad2b"
+content-hash = "ec5575f6db2c31cfdffa8f0bfe6360037df7cc50ffa447376b4935a4076e3b90"

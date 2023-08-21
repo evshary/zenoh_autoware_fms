@@ -1,7 +1,5 @@
 import zenoh
 import json
-import time
-
 
 def list_autoware(session, search_times=10):
     ### uuid --> scope, address
