@@ -47,8 +47,8 @@ def get_vehicle_status(session, scope):
             break
     ### Convert object to dictionary
     vehicle_status_data = class2dict(vehicle_status_data)
-    vehicle_status_data['status']['gear_shift']['data'] = GearShift.GEAR(vehicle_status_data['status']['gear_shift']['data']).name
-    vehicle_status_data['status']['turn_signal']['data'] = TurnSignal.TURN(vehicle_status_data['status']['turn_signal']['data']).name
+    vehicle_status_data['status']['gear_shift']['data'] = GearShift.DATA(vehicle_status_data['status']['gear_shift']['data']).name
+    vehicle_status_data['status']['turn_signal']['data'] = TurnSignal.DATA(vehicle_status_data['status']['turn_signal']['data']).name
     print(vehicle_status_data)
     return vehicle_status_data
 

@@ -79,7 +79,7 @@ class ManualController():
         ### Startup external control
         self.publisher_gate_mode.put(
             GateMode(
-                data=GateMode.DATA.EXTERNAL
+                data=GateMode.DATA["EXTERNAL"].value
             ).serialize()
         )
 
@@ -103,7 +103,7 @@ class ManualController():
         self.thread.join()
 
     def pub_gear(self, gear):
-        gear_val = GearShift.GEAR[gear.upper()].value
+        gear_val = GearShift.DATA[gear.upper()].value
         self.publisher_gear.put(
             GearShiftStamped(
                 stamp=Time(
