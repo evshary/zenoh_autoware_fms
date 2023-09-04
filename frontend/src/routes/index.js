@@ -2,6 +2,7 @@
 
 import { lazy } from 'react'
 
+/*
 const Dashboard = lazy(() => import('../pages/protected/Dashboard'))
 const Welcome = lazy(() => import('../pages/protected/Welcome'))
 const Page404 = lazy(() => import('../pages/protected/404'))
@@ -17,9 +18,31 @@ const ProfileSettings = lazy(() => import('../pages/protected/ProfileSettings'))
 const GettingStarted = lazy(() => import('../pages/GettingStarted'))
 const DocFeatures = lazy(() => import('../pages/DocFeatures'))
 const DocComponents = lazy(() => import('../pages/DocComponents'))
+*/
 
+const Welcome = lazy(() => import('../pages/fms/Welcome'))
+const VehicleList = lazy(() => import('../pages/fms/VehicleList'))
+const RemoteDriving = lazy(() => import('../pages/fms/RemoteDriving'))
+const MapView = lazy(() => import('../pages/fms/MapView'))
 
 const routes = [
+  {
+    path: '/welcome', // the url
+    component: Welcome, // view rendered
+  },
+  {
+    path: '/vehiclelist',
+    component: VehicleList,
+  },
+  {
+    path: '/remotedriving',
+    component: RemoteDriving,
+  },
+  {
+    path: '/mapview',
+    component: MapView,
+  },
+/*
   {
     path: '/dashboard', // the url
     component: Dashboard, // view rendered
@@ -80,6 +103,7 @@ const routes = [
     path: '/blank',
     component: Blank,
   },
+*/
 ]
 
 export default routes

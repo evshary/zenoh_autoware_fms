@@ -1,4 +1,5 @@
 /** Icons are imported separatly to reduce build time */
+/*
 import BellIcon from '@heroicons/react/24/outline/BellIcon'
 import DocumentTextIcon from '@heroicons/react/24/outline/DocumentTextIcon'
 import Squares2X2Icon from '@heroicons/react/24/outline/Squares2X2Icon'
@@ -18,11 +19,31 @@ import InboxArrowDownIcon from '@heroicons/react/24/outline/InboxArrowDownIcon'
 import UsersIcon from '@heroicons/react/24/outline/UsersIcon'
 import KeyIcon from '@heroicons/react/24/outline/KeyIcon'
 import DocumentDuplicateIcon from '@heroicons/react/24/outline/DocumentDuplicateIcon'
+*/
+import ListBulletIcon from '@heroicons/react/24/outline/ListBulletIcon'
+import CameraIcon from '@heroicons/react/24/outline/CameraIcon'
+import MapIcon from '@heroicons/react/24/outline/MapIcon'
 
 const iconClasses = `h-6 w-6`
-const submenuIconClasses = `h-5 w-5`
+//const submenuIconClasses = `h-5 w-5`
 
 const routes = [
+  {
+    path: '/app/vehiclelist', // url
+    icon: <ListBulletIcon className={iconClasses}/>, // icon component
+    name: 'Vehicle Lists', // name that appear in Sidebar
+  },
+  {
+    path: '/app/remotedriving', // url
+    icon: <CameraIcon className={iconClasses}/>, // icon component
+    name: 'Remote Driving', // name that appear in Sidebar
+  },
+  {
+    path: '/app/mapview', // url
+    icon: <MapIcon className={iconClasses}/>, // icon component
+    name: 'Map View', // name that appear in Sidebar
+  },
+/*
   {
     path: '/app/dashboard',
     icon: <Squares2X2Icon className={iconClasses}/>, 
@@ -130,6 +151,7 @@ const routes = [
       }
     ]
   },
+*/
 ]
 
 export default routes
