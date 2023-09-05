@@ -96,6 +96,9 @@ function teleop_startup_on_click(scope) {
             $('#teleop-status-steer').text('---');
             $('#target-turn-text').text('---');
             $('#target-angle-text').text('---');
+            
+            var new_url = $("#teleop-camera").attr("src").split('?')[0] + "?_=" + (new Date()).getTime();
+            $("#teleop-camera").attr("src", new_url);
 
             setInterval(teleop_status, 1000);
             setInterval(teleop_set_angle, 300);

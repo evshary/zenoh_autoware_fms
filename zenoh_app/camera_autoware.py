@@ -1,11 +1,35 @@
-from zenoh_ros_type.common_interfaces.sensor_msgs import Image
+# from zenoh_ros_type.common_interfaces.sensor_msgs import Image
 import zenoh
 import time
 import sys
-from flask import Flask, Response
+from flask import Flask, Response, request
 from cv_bridge import CvBridge
 import cv2
-import requests
+from werkzeug.serving import make_server
+
+from dataclasses import dataclass
+from pycdr2 import IdlStruct,Enum
+from pycdr2.types import int8, uint8, int32, int64, uint32, uint64, float32, float64, sequence
+@dataclass
+class Time(IdlStruct, typename="Time"):
+    sec: int32
+    nanosec: uint32
+
+@dataclass
+class StdMsgsHeader(IdlStruct, typename="StdMsgsHeader"):
+    stamp: Time
+    frame_id: str
+
+@dataclass
+class Image(IdlStruct, typename="Image"):
+    header: StdMsgsHeader
+    height: uint32
+    width: uint32
+    encoding: str
+    is_bigendian: uint8
+    step: uint32
+    data: sequence[uint8]
+
 
 class MJPEG_server():
     def __init__(self, zenoh_session, scope):
@@ -16,6 +40,7 @@ class MJPEG_server():
         self.scope = scope
         self.host = None
         self.port = None
+        self.server = None
 
         def callback(sample):
             data = Image.deserialize(sample.payload)
@@ -30,15 +55,8 @@ class MJPEG_server():
         def index():
             return "Motion JPEG Server"
 
-        @self.app.route("/shutdown", methods=["POST"])
-        def shutdown():
-            print(f"Shutting down motion jpeg server on vehicle {self.scope}...")
-            request.environ.get("werkzeug.server.shutdown")()
-            return "Shutting down..."
-
-        @self.app.route('/video_feed')
+        @self.app.route('/video')
         def video_feed():
-            print('video_feed')
             return Response(
                 self.generate_frame(), 
                 mimetype='multipart/x-mixed-replace; boundary=frame'
@@ -57,10 +75,10 @@ class MJPEG_server():
         self.scope = new_scope
 
     def shutdown(self):
+        self.sub.undeclare()
         if self.host is not None and self.port is not None:
-            requests.post(
-                f"http://{self.host}:{self.port}/shutdown"
-            )
+            self.server.shutdown()
+            self.server = None
             self.host = None
             self.port = None
 
@@ -83,9 +101,21 @@ class MJPEG_server():
             
             self.port = port
 
-            self.app.run(host=host, port=port)
+            # self.app.run(host=host, port=port)
+            self.server = make_server(host, port, self.app)
+            self.server.serve_forever()
         
 if __name__ == "__main__":
     s = zenoh.open()
     server = MJPEG_server(s, 'v1')
-    server.run()
+    # import threading
+    # t = threading.Thread(target=server.run)
+    # t.start()
+    # while True:
+    #     c = input()
+    #     if c == "s":
+    #         server.shutdown()
+    #         t.join()
+    #     if c == "r":
+    #         t = threading.Thread(target=server.run)
+    #         t.start()

@@ -4,8 +4,10 @@ from typing_extensions import Annotated
 from zenoh_app.list_autoware import list_autoware
 from zenoh_app.status_autoware import *
 from zenoh_app.teleop_autoware import *
+from zenoh_app.camera_autoware import MJPEG_server
 import zenoh
 import math
+import threading
 
 app = FastAPI()
 app.add_middleware(
@@ -14,8 +16,11 @@ app.add_middleware(
 )
 
 conf = zenoh.Config.from_file('config.json5')
-session = zenoh.open(conf)
+# session = zenoh.open(conf)
+session = zenoh.open()
 manual_controller = None
+mjpeg_server = None
+mjpeg_server_thread = None
 
 @app.get("/")
 async def root():
@@ -34,10 +39,17 @@ async def manage_status_autoware(scope):
 
 @app.get("/teleop/startup")
 async def manage_teleop_startup(scope):
-    global manual_controller
+    global manual_controller, mjpeg_server, mjpeg_server_thread
     if manual_controller is not None:
         manual_controller.stop_teleop()
     manual_controller = ManualController(session, scope)
+
+    if mjpeg_server is not None:
+        mjpeg_server.change_scope(scope)
+    else:
+        mjpeg_server = MJPEG_server(session, scope)
+        mjpeg_server_thread = threading.Thread(target = mjpeg_server.run)
+        mjpeg_server_thread.start()
     return f"Startup manual control on {scope}."
 
 @app.get("/teleop/gear")
