@@ -32,9 +32,8 @@ def list_autoware(session, search_times=10):
                 uuid = key_expr_.split('/')[5].lower()
                 address = payload_['dst']
 
-                if uuid not in agent_infos.keys():
-                    agent_infos[uuid] = {}
-                agent_infos[uuid]['address'] = address
+                if uuid in agent_infos.keys():
+                    agent_infos[uuid]['address'] = address
             except:
                 pass
     

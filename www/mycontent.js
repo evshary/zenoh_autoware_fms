@@ -89,7 +89,7 @@ function teleop_startup_on_click(scope) {
         type: "GET",
         url: `${api_server}/teleop/startup?scope=${scope}`,
         success: function(data) {
-            console.log(data);
+            console.log(data.text);
             $('#teleop-scope').text(scope);
             $('#teleop-status-velocity').text('---');
             $('#teleop-status-gear').text('---');
@@ -97,12 +97,12 @@ function teleop_startup_on_click(scope) {
             $('#target-turn-text').text('---');
             $('#target-angle-text').text('---');
             
-            var new_url = $("#teleop-camera").attr("src").split('?')[0] + "?_=" + (new Date()).getTime();
+            var new_url = `http://${data.mjpeg_host}:${data.mjpeg_port}/video?_=` + (new Date()).getTime();
             $("#teleop-camera").attr("src", new_url);
 
             setInterval(teleop_status, 1000);
             setInterval(teleop_set_angle, 300);
-            alert(data);
+            alert(data.text);
         },
         error: function(error) {
             console.log(error);

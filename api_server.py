@@ -9,6 +9,9 @@ import zenoh
 import math
 import threading
 
+MJPEG_HOST="0.0.0.0"
+MJPEG_PORT=5000
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -16,8 +19,7 @@ app.add_middleware(
 )
 
 conf = zenoh.Config.from_file('config.json5')
-# session = zenoh.open(conf)
-session = zenoh.open()
+session = zenoh.open(conf)
 manual_controller = None
 mjpeg_server = None
 mjpeg_server_thread = None
@@ -50,7 +52,11 @@ async def manage_teleop_startup(scope):
         mjpeg_server = MJPEG_server(session, scope)
         mjpeg_server_thread = threading.Thread(target = mjpeg_server.run)
         mjpeg_server_thread.start()
-    return f"Startup manual control on {scope}."
+    return {
+        "text": f"Startup manual control on {scope}.",
+        "mjpeg_host": "localhost" if MJPEG_HOST == "0.0.0.0" else MJPEG_HOST,
+        "mjpeg_port": MJPEG_PORT
+    }
 
 @app.get("/teleop/gear")
 async def manage_teleop_gear(scope, gear):

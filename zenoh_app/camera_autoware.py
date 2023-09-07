@@ -90,7 +90,8 @@ class MJPEG_server():
             ret, buffer = cv2.imencode('.jpg', self.camera_image)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n'
+               b'Cache-Control: no-cache\r\n\r\n' + frame + b'\r\n')
 
     def run(self, host='0.0.0.0', port=5000):
         if self.host is None and self.port is None:
