@@ -11,8 +11,8 @@ python = "^3.8"
 fastapi = "^0.95.1"
 uvicorn = "^0.22.0"
 eclipse-zenoh = "^0.7.2rc0"
-#zenoh-ros-type = { git = "https://github.com/evshary/zenoh-ros-type-python.git", branch = "main" }
-zenoh-ros-type = "^0.2.0"
+zenoh-ros-type = { git = "https://github.com/evshary/zenoh-ros-type-python.git", branch = "main" }
+#zenoh-ros-type = "^0.2.0"
 opencv-python = "^4.8.0.76"
 cvbridge3 = "^1.1"
 flask = "^2.3.3"
