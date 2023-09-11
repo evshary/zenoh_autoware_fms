@@ -10,7 +10,6 @@ function InternalPage(){
         dispatch(setPageTitle({ title : "Dashboard"}))
       }, [])
 
-
     return(
         <Dashboard />
     )
