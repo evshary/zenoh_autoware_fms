@@ -18,7 +18,7 @@ function Lists() {
 
     useEffect(() => {
         dispatch(getListContent())
-    }, [])
+    }, [dispatch])
 
     return(
         <>
@@ -30,6 +30,7 @@ function Lists() {
                     <thead>
                     <tr>
                         <th>Name</th>
+                        <th>IP address</th>
                         <th>CPU Overview</th>
                         <th>Vehicle Status</th>
                     </tr>
@@ -37,17 +38,29 @@ function Lists() {
                     <tbody>
                         {
                             list.map((l, k) => {
+
                                 return(
                                     <tr key={k}>
                                     <td>
                                         <div className="flex items-center space-x-3">
                                             <div>
-                                                <div className="font-bold">{l.scope}</div>
+                                                <div className="font-bold">{l.name}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>{l.address}</td>
-                                    <td>test</td>
+                                    <td>
+                                        idle: {l.status.cpu.all.idle}  <br/>
+                                        used: {l.status.cpu.all.total} <br/>
+                                        system: {l.status.cpu.all.sys} <br/>
+                                        user: {l.status.cpu.all.usr}   <br/>
+                                    </td>
+                                    <td>
+                                        Turn: {l.status.vehicle.status.turn_signal.data}<br/>
+                                        Gear: {l.status.vehicle.status.gear_shift.data}<br/>
+                                        Steering: {l.status.vehicle.status.steering.data}<br/>
+                                        Velocity: {l.status.vehicle.status.twist.linear.x}<br/>
+                                    </td>
                                     </tr>
                                 )
                             })
