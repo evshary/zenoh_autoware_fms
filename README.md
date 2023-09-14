@@ -25,6 +25,10 @@ poetry install
 
 * You can use environment [here](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_multiple_fms) to test FMS
 
+# Development
+
+* API Server: http://127.0.0.1:8000/docs
+
 # Project
 
 Please check our roadmap in [GitHub Project](https://github.com/users/evshary/projects/2)
