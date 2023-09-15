@@ -19,12 +19,12 @@ export const getListContent = createAsyncThunk('/vehicle/list', async () => {
                 var v = new Vehicle(element.scope)
                 v.address = element.address
                 v.status = response.data
-                vehiclelist.push(v)
+                vehiclelist.push(JSON.stringify(v))
              })
         promises.push(p)
     })
     await Promise.all(promises)
-    //console.log("All vehicle list: ", vehiclelist)
+    console.log("All vehicle list: ", vehiclelist)
 	return vehiclelist
 })
 

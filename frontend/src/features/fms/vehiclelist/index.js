@@ -4,10 +4,10 @@ import TitleCard from "../../../components/Cards/TitleCard"
 import { getListContent } from "./vehiclelistSlice"
 
 const Refresh = () => {
-    // TODO: Add Refresh function
+    const dispatch = useDispatch()
     return(
         <div className="inline-block float-right">
-            <button className="btn px-6 btn-sm normal-case btn-primary">Refresh</button>
+            <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => {dispatch(getListContent())}}>Refresh</button>
         </div>
     )
 }
@@ -17,13 +17,13 @@ function Lists() {
     const dispatch = useDispatch()
 
     useEffect(() => {
+        // TODO: We can show loading on webpage
         dispatch(getListContent())
     }, [dispatch])
 
     return(
         <>
             <TitleCard title="Vehicles" topMargin="mt-2" TopSideButtons={<Refresh />}>
-
             {/* Vehicle list after api call */}
             <div className="overflow-x-auto w-full">
                 <table className="table w-full">
@@ -37,29 +37,29 @@ function Lists() {
                     </thead>
                     <tbody>
                         {
-                            list.map((l, k) => {
-
+                            list.map((element, idx) => {
+                                var v = JSON.parse(element)
                                 return(
-                                    <tr key={k}>
+                                    <tr key={idx}>
                                     <td>
                                         <div className="flex items-center space-x-3">
                                             <div>
-                                                <div className="font-bold">{l.name}</div>
+                                                <div className="font-bold">{v.name}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{l.address}</td>
+                                    <td>{v.address}</td>
                                     <td>
-                                        idle: {l.status.cpu.all.idle}  <br/>
-                                        used: {l.status.cpu.all.total} <br/>
-                                        system: {l.status.cpu.all.sys} <br/>
-                                        user: {l.status.cpu.all.usr}   <br/>
+                                        idle: {v.status.cpu.all.idle}  <br/>
+                                        used: {v.status.cpu.all.total} <br/>
+                                        system: {v.status.cpu.all.sys} <br/>
+                                        user: {v.status.cpu.all.usr}   <br/>
                                     </td>
                                     <td>
-                                        Turn: {l.status.vehicle.status.turn_signal.data}<br/>
-                                        Gear: {l.status.vehicle.status.gear_shift.data}<br/>
-                                        Steering: {l.status.vehicle.status.steering.data}<br/>
-                                        Velocity: {l.status.vehicle.status.twist.linear.x}<br/>
+                                        Turn: {v.status.vehicle.status.turn_signal.data}<br/>
+                                        Gear: {v.status.vehicle.status.gear_shift.data}<br/>
+                                        Steering: {v.status.vehicle.status.steering.data}<br/>
+                                        Velocity: {v.status.vehicle.status.twist.linear.x}<br/>
                                     </td>
                                     </tr>
                                 )
