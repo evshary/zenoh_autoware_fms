@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import Charts from '../../features/charts'
+import TeleopPnael from '../../features/fms/remotedrive'
 import { setPageTitle } from '../../features/common/headerSlice'
 
 function InternalPage(){
@@ -12,7 +12,7 @@ function InternalPage(){
 
 
     return(
-        <Charts />
+        <TeleopPnael />
     )
 }
 

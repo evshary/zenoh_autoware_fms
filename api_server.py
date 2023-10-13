@@ -96,4 +96,8 @@ async def manage_teleop_status():
             'steering': manual_controller.current_steer * 180 / math.pi
         }
     else:
-        return "Please startup the teleop first"
+        return {
+            'velocity': '---',
+            'gear': '---',
+            'steering': '---'
+        }
