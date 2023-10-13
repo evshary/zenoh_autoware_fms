@@ -5,6 +5,7 @@ import { startupTeleop, setGear, setVelocity, setTurn } from "./remoteDriveSlice
 import { Refresh } from "../vehiclelist"
 import { StyleSelect, StyleTextArea } from "../common"
 import { CamImageWithStatus } from "./cameraImg"
+import SteeringWheel from "./steering"
 import axios from 'axios'
 
 const VehicleSelect = forwardRef((props, ref) => {
@@ -52,12 +53,15 @@ function TeleopPnael() {
             steering: '---'
         }
     })
+    const [rotation, setRotation] = useState(0);
 
+    const handleRotationChange = (newRotation) => {
+        setRotation(newRotation);
+    };
 
     useEffect(() => {
         /* Get the status of vehicle */
         const getTeleopStatus = async () => {
-            
             if(teleopScope === 'None') return;
             const response = await axios.get('/teleop/status', {});
             console.log(response.data)
@@ -69,15 +73,26 @@ function TeleopPnael() {
             setTeleopStatus(newStatus)
         }
 
+        /* Set the steering of vehicle */
+        const setTeleopTurn = async () => {
+            if(teleopScope === 'None') return;
+            await setTurn(teleopScope, (-1) * rotation)
+        }
+
+
         /* Get status of vehicle every 1 sec after startup */
-        const set_interval = setInterval(getTeleopStatus, 1000);
+        const get_status_interval = setInterval(getTeleopStatus, 1000)
+
+        /* Set steering angle to the vehicle every 1 sec after startup */
+        const set_steering_interval = setInterval(setTeleopTurn, 1000)
 
         /* Clear the timer when unmount */
         return () => {
-            clearInterval(set_interval);
+            clearInterval(get_status_interval)
+            clearInterval(set_steering_interval)
         }
 
-    }, [teleopScope])
+    }, [teleopScope, rotation])
 
     return (
         <>
@@ -120,7 +135,7 @@ function TeleopPnael() {
                     </div>
 
                     <div className="row-span-1 col-span-1 flex justify-center items-center">
-                        <img src={require('./steering-wheel.png')} className="h-40" />
+                        <SteeringWheel rotation={rotation} onRotationChange={handleRotationChange} />
                     </div>
                 </div>
             </TitleCard>
