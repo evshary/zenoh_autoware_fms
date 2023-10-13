@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux"
 import TitleCard from "../../../components/Cards/TitleCard"
 import { getListContent } from "./vehiclelistSlice"
 
-const Refresh = () => {
+export const Refresh = () => {
     const dispatch = useDispatch()
     return(
         <div className="inline-block float-right">
