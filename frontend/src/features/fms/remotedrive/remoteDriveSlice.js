@@ -30,6 +30,7 @@ export const setTurn =  async (scope, angle) => {
 export const teleopSlice = createSlice({
     name: 'teleop',
     initialState: {
+		isLoading: false,
         teleopScope: "None",
 		cameraUrl: "http://127.0.0.1:5000/video"
     },
@@ -37,18 +38,19 @@ export const teleopSlice = createSlice({
     },
     extraReducers: builder => {
 		builder.addCase(startupTeleop.pending, state => {
-			// state.isLoading = true
+			state.isLoading = true
 			return state;
 		})
 		builder.addCase(startupTeleop.fulfilled, (state, action) => {
 			const currentTime = new Date();
 			const newUrl = `${state.cameraUrl}?${currentTime.getTime()}`
+			state.isLoading = false
 			state.cameraUrl = newUrl
 			state.teleopScope = action.payload
 			return state;
 		})
 		builder.addCase(startupTeleop.rejected, state => {
-			// state.isLoading = false
+			state.isLoading = false
 			return state;
 		})
 	},
