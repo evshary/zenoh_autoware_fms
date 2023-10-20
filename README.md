@@ -4,26 +4,21 @@ The project is the FMS (fleet management system) prototype of Autoware based on 
 
 # Usage
 
-* Prerequisite
+* Install prerequisite
 
 ```shell
-# Install poetry
-curl -sSL https://install.python-poetry.org | python3 -
-poetry config virtualenvs.in-project true
-
-# Install packages
-sudo apt install parallel
-# Install Python packages
-poetry install
+./prerequisite.sh
 ```
 
 * Run Web Server & API Server
 
 ```shell
+# Source ROS 2 environment
 ./run_server.sh
 ```
 
 * You can use environment [here](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_multiple_fms) to test FMS
+    - Remember to change the IP in `docker-compose.yml` to FMS IP.
 
 # Development
 
