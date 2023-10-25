@@ -23,6 +23,7 @@ The project is the FMS (fleet management system) prototype of Autoware based on 
 # Development
 
 * API Server: http://127.0.0.1:8000/docs
+* Zenoh Listen Port: TCP/7887
 
 # Project
 
