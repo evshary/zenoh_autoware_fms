@@ -4,9 +4,11 @@
       'tcp/0.0.0.0:7887'
     ]
   },
+  /*
   scouting: {
     multicast: {
       enabled: false,
     },
   }
+  */
 }
