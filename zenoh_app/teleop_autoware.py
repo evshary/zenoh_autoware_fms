@@ -18,7 +18,7 @@ SET_CONTROL_KEY_EXPR = '/rt/external/selected/control_cmd'
 SET_PEDAL_CONTROL_KEY_EXPR = '/rt/api/external/set/command/remote/control'
 
 class ManualController():
-    def __init__(self, session, scope):
+    def __init__(self, session, scope, use_bridge_ros2dds=False):
         ### Information
         self.session = session
         self.scope = scope
@@ -32,6 +32,8 @@ class ManualController():
         self.target_velocity = 0
         self.target_angle = 0
 
+        self.prefix = scope if use_bridge_ros2dds else scope + '/rt'
+
         def callback_status(sample):
             data = VehicleStatusStamped.deserialize(sample.payload)
             self.current_velocity = data.status.twist.linear.x
@@ -41,15 +43,15 @@ class ManualController():
             # print(f'Gear: {self.current_gear} | velocity: {self.current_velocity * 3600 / 1000}')
 
         ### Subscribers
-        self.subscriber_status = self.session.declare_subscriber(scope + GET_STATUS_KEY_EXPR, callback_status)
+        self.subscriber_status = self.session.declare_subscriber(self.prefix + GET_STATUS_KEY_EXPR, callback_status)
 
         ### Publishers
-        self.publisher_gate_mode = self.session.declare_publisher(scope + SET_GATE_MODE_KEY_EXPR)
-        self.publisher_engage = self.session.declare_publisher(scope + SET_ENGAGE_KEY_EXPR)
-        self.publisher_gear = self.session.declare_publisher(scope + SET_GEAR_KEY_EXPR)
-        self.publisher_turn = self.session.declare_publisher(scope + SET_TURN_KEY_EXPR)
-        self.publisher_control = self.session.declare_publisher(scope + SET_CONTROL_KEY_EXPR)
-        self.publisher_pedal = self.session.declare_publisher(scope + SET_PEDAL_CONTROL_KEY_EXPR)
+        self.publisher_gate_mode = self.session.declare_publisher(self.prefix + SET_GATE_MODE_KEY_EXPR)
+        self.publisher_engage = self.session.declare_publisher(self.prefix + SET_ENGAGE_KEY_EXPR)
+        self.publisher_gear = self.session.declare_publisher(self.prefix + SET_GEAR_KEY_EXPR)
+        self.publisher_turn = self.session.declare_publisher(self.prefix + SET_TURN_KEY_EXPR)
+        self.publisher_control = self.session.declare_publisher(self.prefix + SET_CONTROL_KEY_EXPR)
+        self.publisher_pedal = self.session.declare_publisher(self.prefix + SET_PEDAL_CONTROL_KEY_EXPR)
 
         ### Control command
         self.control_command = AckermannControlCommand(

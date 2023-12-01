@@ -4,6 +4,9 @@ import time
 from pycdr2 import Dict
 from zenoh_ros_type.tier4_autoware_msgs import CpuUsage, CpuStatus, GearShift, TurnSignal, VehicleStatusStamped
 
+GET_CPU_KEY_EXPR = '/api/external/get/cpu_usage'
+GET_VEHICLE_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
+
 def class2dict(instance, built_dict={}):
     ### Reference: https://stackoverflow.com/questions/63893843/how-to-convert-nested-object-to-nested-dictionary-in-python
     if not hasattr(instance, "__dict__"):
@@ -17,9 +20,10 @@ def class2dict(instance, built_dict={}):
             new_subdic[key] = class2dict(value)
     return new_subdic
 
-def get_cpu_status(session, scope):
-    cpu_key_expr = f'{scope}/rt/api/external/get/cpu_usage'
-    print(cpu_key_expr)
+def get_cpu_status(session, scope, use_bridge_ros2dds=False):
+    prefix = scope if use_bridge_ros2dds else scope + '/rt'
+    cpu_key_expr = prefix + GET_CPU_KEY_EXPR
+    print(cpu_key_expr, flush=True)
     sub = session.declare_subscriber(cpu_key_expr, zenoh.Queue(), reliability=zenoh.Reliability.RELIABLE())
     cpu_status_data = None
     while cpu_status_data is None:
@@ -35,9 +39,10 @@ def get_cpu_status(session, scope):
     print(cpu_status_data)
     return cpu_status_data
 
-def get_vehicle_status(session, scope):
-    vehicle_status_key_expr = f'{scope}/rt/api/external/get/vehicle/status'
-    print(vehicle_status_key_expr)
+def get_vehicle_status(session, scope, use_bridge_ros2dds=False):
+    prefix = scope if use_bridge_ros2dds else scope + '/rt'
+    vehicle_status_key_expr = prefix + GET_VEHICLE_STATUS_KEY_EXPR
+    print(vehicle_status_key_expr, flush=True)
     sub = session.declare_subscriber(vehicle_status_key_expr, zenoh.Queue(), reliability=zenoh.Reliability.RELIABLE())
     vehicle_status_data = None
     while vehicle_status_data is None:

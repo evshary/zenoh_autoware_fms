@@ -7,9 +7,10 @@ from cv_bridge import CvBridge
 import cv2
 from werkzeug.serving import make_server
 
+IMAGE_RAW_KEY_EXPR='/sensing/camera/traffic_light/image_raw'
 
 class MJPEG_server():
-    def __init__(self, zenoh_session, scope):
+    def __init__(self, zenoh_session, scope, use_bridge_ros2dds=False):
         self.app = Flask(__name__)
         self.bridge = CvBridge()
         self.camera_image = None
@@ -18,13 +19,15 @@ class MJPEG_server():
         self.host = None
         self.port = None
         self.server = None
+        self.use_bridge_ros2dds = use_bridge_ros2dds
+        self.prefix = scope if use_bridge_ros2dds else scope + '/rt'
 
         def callback(sample):
             data = Image.deserialize(sample.payload)
             self.camera_image = self.bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         
         self.sub = self.session.declare_subscriber(
-            f'{scope}/rt/sensing/camera/traffic_light/image_raw', 
+            self.prefix + IMAGE_RAW_KEY_EXPR,
             callback
         )
 
@@ -45,8 +48,9 @@ class MJPEG_server():
             self.camera_image = self.bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         
         self.sub.undeclare()
+        self.prefix = new_scope if self.use_bridge_ros2dds else new_scope + '/rt'
         self.sub = self.session.declare_subscriber(
-            f'{new_scope}/rt/sensing/camera/traffic_light/image_raw', 
+            self.prefix + IMAGE_RAW_KEY_EXPR,
             callback
         )
         self.scope = new_scope
