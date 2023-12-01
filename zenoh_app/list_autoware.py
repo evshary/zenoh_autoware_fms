@@ -1,20 +1,28 @@
 import zenoh
 import json
 
-def list_autoware(session, search_times=10):
+def list_autoware(session, use_bridge_ros2dds=False, search_times=10):
     ### uuid --> scope, address
     agent_infos = {}
 
     ### Retrive scope from admin space of zenoh-bridge-dds
     for _ in range(search_times):
-        replies = session.get('@/service/**/config', zenoh.Queue())
+        if use_bridge_ros2dds:
+            replies = session.get('@ros2/**/config', zenoh.Queue())
+        else:
+            replies = session.get('@/service/**/config', zenoh.Queue())
         for reply in replies.receiver:
             try:
                 key_expr_ = str(reply.ok.key_expr)
                 payload_ = json.loads(reply.ok.payload.decode("utf-8"))
 
-                uuid = key_expr_.split('/')[2].lower()
-                scope = payload_['scope']
+                if use_bridge_ros2dds:
+                    uuid = key_expr_.split('/')[1].lower()
+                    # Need to remove /
+                    scope = payload_['namespace'][1:]
+                else:
+                    uuid = key_expr_.split('/')[2].lower()
+                    scope = payload_['scope']
 
                 if uuid not in agent_infos.keys():
                     agent_infos[uuid] = {}

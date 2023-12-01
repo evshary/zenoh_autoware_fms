@@ -20,6 +20,7 @@ app.add_middleware(
 
 conf = zenoh.Config.from_file('config.json5')
 session = zenoh.open(conf)
+use_bridge_ros2dds = False
 manual_controller = None
 mjpeg_server = None
 mjpeg_server_thread = None
@@ -30,13 +31,13 @@ async def root():
 
 @app.get("/list")
 async def manage_list_autoware():
-    return list_autoware(session)
+    return list_autoware(session, use_bridge_ros2dds)
 
 @app.get("/status/{scope}")
 async def manage_status_autoware(scope):
     return {
-        "cpu": get_cpu_status(session, scope),
-        "vehicle": get_vehicle_status(session, scope)
+        "cpu": get_cpu_status(session, scope, use_bridge_ros2dds),
+        "vehicle": get_vehicle_status(session, scope, use_bridge_ros2dds)
     }
 
 @app.get("/teleop/startup")
@@ -44,12 +45,12 @@ async def manage_teleop_startup(scope):
     global manual_controller, mjpeg_server, mjpeg_server_thread
     if manual_controller is not None:
         manual_controller.stop_teleop()
-    manual_controller = ManualController(session, scope)
+    manual_controller = ManualController(session, scope, use_bridge_ros2dds)
 
     if mjpeg_server is not None:
         mjpeg_server.change_scope(scope)
     else:
-        mjpeg_server = MJPEG_server(session, scope)
+        mjpeg_server = MJPEG_server(session, scope, use_bridge_ros2dds)
         mjpeg_server_thread = threading.Thread(target = mjpeg_server.run)
         mjpeg_server_thread.start()
     return {
