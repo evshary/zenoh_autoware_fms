@@ -11,19 +11,19 @@ export const startupTeleop = createAsyncThunk('teleop/startup', async (scope) =>
 
 export const setGear =  async (scope, gear) => {
 	const response = await axios.get(`/teleop/gear?scope=${scope}&gear=${gear}`, {});
-	console.log(response)
+	// console.log(response)
 	return response;
 }
 
 export const setVelocity =  async (scope, velocity) => {
 	const response = await axios.get(`/teleop/velocity?scope=${scope}&velocity=${velocity}`, {});
-	console.log(response)
+	// console.log(response)
 	return response;
 }
 
 export const setTurn =  async (scope, angle) => {
 	const response = await axios.get(`/teleop/turn?scope=${scope}&angle=${angle}`, {});
-	console.log(response)
+	// console.log(response)
 	return response;
 }
 
