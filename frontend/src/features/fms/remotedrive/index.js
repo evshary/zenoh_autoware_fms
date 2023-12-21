@@ -59,7 +59,7 @@ function TeleopPnael() {
     const {list} = useSelector(state => state.list)
     const refreshLoadinig = useSelector(state => state.list.isLoading)
     const teleopScope = useSelector(state => state.teleop.teleopScope)
-    const cameraUrl = useSelector(state => state.teleop.cameraUrl)
+    // const cameraUrl = useSelector(state => state.teleop.cameraUrl)
     const teleopLoading = useSelector(state => state.teleop.isLoading)
     const [teleopStatus, setTeleopStatus] = useState( () => {
         return {
@@ -69,17 +69,34 @@ function TeleopPnael() {
         }
     })
     const [rotation, setRotation] = useState(0);
+    const [cameraUrl, setCameraUrl] = useState("");
 
     const handleRotationChange = (newRotation) => {
         setRotation(newRotation);
     };
 
     useEffect(() => {
+        /* Connect to web socket serever */
+        const ws = new WebSocket("ws://localhost:8000/video");
+
+        /* Handle image sent by web socket */
+        ws.onmessage = (event) => {
+            // if (event.data instanceof Blob) {
+            // Convert the received data to a Blob
+            const blob = event.data;
+            // Create a data URL from the Blob
+            const url = URL.createObjectURL(blob);
+            // Update the state with the image source URL
+            setCameraUrl(url);
+            console.log(url)
+            // }
+        };
+
         /* Get the status of vehicle */
         const getTeleopStatus = async () => {
             if(teleopScope === 'None') return;
             const response = await axios.get('/teleop/status', {});
-            console.log(response.data)
+            // console.log(response.data)
             let newStatus = Object.assign({}, {
                 velocity: response.data.velocity,
                 gear: response.data.gear,
@@ -105,6 +122,7 @@ function TeleopPnael() {
         return () => {
             clearInterval(get_status_interval)
             clearInterval(set_steering_interval)
+            ws.close();
         }
 
     }, [teleopScope, rotation])
@@ -113,7 +131,7 @@ function TeleopPnael() {
         <>
             <TitleCard title={(teleopScope !== "None")?`Remote Driving on ${teleopScope}` : "Remote Driving"} TopSideButtons={<Refresh isLoading={refreshLoadinig}/>}>
                 <div className="grid grid-rows-4 grid-flow-col gap-4">
-                    <CamImageWithStatus classname="row-span-4 col-span-10 bg-no-repeat bg-cover" bgUrl={cameraUrl} status={teleopStatus} />
+                <CamImageWithStatus classname="row-span-4 col-span-10 bg-no-repeat bg-cover relative" bgUrl={cameraUrl} status={teleopStatus} />
 
                     <div className="row-span-1 col-span-1">
                         <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Select a vehicle</label>

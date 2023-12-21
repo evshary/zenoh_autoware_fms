@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing_extensions import Annotated
 from zenoh_app.list_autoware import list_autoware
@@ -8,6 +8,9 @@ from zenoh_app.camera_autoware import MJPEG_server
 import zenoh
 import math
 import threading
+import websockets
+import cv2
+import asyncio
 
 MJPEG_HOST="0.0.0.0"
 MJPEG_PORT=5000
@@ -23,7 +26,6 @@ session = zenoh.open(conf)
 use_bridge_ros2dds = False
 manual_controller = None
 mjpeg_server = None
-mjpeg_server_thread = None
 
 @app.get("/")
 async def root():
@@ -40,6 +42,25 @@ async def manage_status_autoware(scope):
         "vehicle": get_vehicle_status(session, scope, use_bridge_ros2dds)
     }
 
+@app.websocket("/video")
+async def handle_ws(websocket: WebSocket):
+    await websocket.accept()
+    global mjpeg_server
+
+    try:
+        while True:
+            if mjpeg_server is None or mjpeg_server.camera_image is None:
+                await asyncio.sleep(2)
+            else:
+                # Encode the frame as JPEG
+                _, buffer = cv2.imencode('.jpg', mjpeg_server.camera_image)
+                frame_bytes = buffer.tobytes()
+                await websocket.send_bytes(frame_bytes)
+                await asyncio.sleep(0.1)
+    except WebSocketDisconnect:
+        await websocket.close()
+
+
 @app.get("/teleop/startup")
 async def manage_teleop_startup(scope):
     global manual_controller, mjpeg_server, mjpeg_server_thread
@@ -51,8 +72,8 @@ async def manage_teleop_startup(scope):
         mjpeg_server.change_scope(scope)
     else:
         mjpeg_server = MJPEG_server(session, scope, use_bridge_ros2dds)
-        mjpeg_server_thread = threading.Thread(target = mjpeg_server.run)
-        mjpeg_server_thread.start()
+        # mjpeg_server_thread = threading.Thread(target = mjpeg_server.run)
+        # mjpeg_server_thread.start()
     return {
         "text": f"Startup manual control on {scope}.",
         "mjpeg_host": "localhost" if MJPEG_HOST == "0.0.0.0" else MJPEG_HOST,

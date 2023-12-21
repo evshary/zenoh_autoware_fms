@@ -5,10 +5,8 @@ export const CamImageWithStatus = (props) => {
      * props.status: The status about vehicle being teleoped
      ********************************************************/
     return (
-        <div className={props.classname} style={{
-            backgroundImage: `url(${props.bgUrl})`,
-            height: 650
-        }}>
+        <div className={props.classname}>
+            <img src={props.bgUrl} className="absolute inset-0 w-full h-full object-cover z-0"></img>
             <div className="relative w-1/3 p-4">
                 <table className="w-full text-sm text-left font-bold text-black-500 dark:text-gray-400">
                     <tbody>
