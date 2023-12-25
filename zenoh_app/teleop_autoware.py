@@ -12,10 +12,11 @@ from zenoh_ros_type.tier4_autoware_msgs import GearShift, GearShiftStamped, Vehi
 GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
-SET_GEAR_KEY_EXPR = '/api/external/set/command/remote/shift'
-SET_TURN_KEY_EXPR = '/api/external/set/command/remote/turn_signal'
+# TODO: local should be replaced with remote, but this is workaround here
+SET_GEAR_KEY_EXPR = '/api/external/set/command/local/shift'
+SET_TURN_KEY_EXPR = '/api/external/set/command/local/turn_signal'
+SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/local/control'
 SET_CONTROL_KEY_EXPR = '/external/selected/control_cmd'
-SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/remote/control'
 
 class ManualController():
     def __init__(self, session, scope, use_bridge_ros2dds=False):
