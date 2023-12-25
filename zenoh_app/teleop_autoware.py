@@ -1,6 +1,5 @@
 import zenoh
 import time
-from pycdr2 import Dict
 from threading import Thread, Event
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, LongitudinalCommand, AckermannLateralCommand
@@ -42,7 +41,6 @@ class ManualController():
             gear_val = data.status.gear_shift.data
             self.current_gear = GearShift.DATA(gear_val).name
             self.current_steer = data.status.steering.data
-            # print(f'Gear: {self.current_gear} | velocity: {self.current_velocity * 3600 / 1000}')
 
         ### Topics
         ###### Subscribers

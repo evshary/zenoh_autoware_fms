@@ -1,8 +1,6 @@
 from zenoh_ros_type.common_interfaces.sensor_msgs import Image
 import zenoh
-import time
-import sys
-from flask import Flask, Response, request
+from flask import Flask, Response
 from cv_bridge import CvBridge
 import cv2
 from werkzeug.serving import make_server

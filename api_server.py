@@ -1,13 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from typing_extensions import Annotated
 from zenoh_app.list_autoware import list_autoware
 from zenoh_app.status_autoware import *
 from zenoh_app.teleop_autoware import *
 from zenoh_app.camera_autoware import MJPEG_server
 import zenoh
 import math
-import threading
 import websockets
 import cv2
 import asyncio
