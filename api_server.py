@@ -113,7 +113,7 @@ async def manage_teleop_status():
     global manual_controller
     if manual_controller is not None:
         return {
-            'velocity': manual_controller.current_velocity,
+            'velocity': round(manual_controller.current_velocity * 3600 / 1000, 2),
             'gear': manual_controller.current_gear,
             'steering': manual_controller.current_steer * 180 / math.pi
         }
