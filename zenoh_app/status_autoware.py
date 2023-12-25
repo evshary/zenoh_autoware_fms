@@ -1,7 +1,6 @@
 import zenoh
 import json
 import time
-from pycdr2 import Dict
 from zenoh_ros_type.tier4_autoware_msgs import CpuUsage, CpuStatus, GearShift, TurnSignal, VehicleStatusStamped
 
 GET_CPU_KEY_EXPR = '/api/external/get/cpu_usage'

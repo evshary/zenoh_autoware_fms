@@ -96,7 +96,6 @@ function TeleopPnael() {
         const getTeleopStatus = async () => {
             if(teleopScope === 'None') return;
             const response = await axios.get('/teleop/status', {});
-            // console.log(response.data)
             let newStatus = Object.assign({}, {
                 velocity: response.data.velocity,
                 gear: response.data.gear,
