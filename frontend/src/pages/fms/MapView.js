@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { setPageTitle } from '../../features/common/headerSlice'
-import Integration from '../../features/integration'
+import MapViewer from '../../features/fms/mapview'
 
 function InternalPage(){
 
@@ -12,7 +12,7 @@ function InternalPage(){
       }, [])
       
     return(
-        <Integration />
+        <MapViewer xmlFile="/carla_map/Town01/lanelet2_map.osm" center={[0.0, 0.0]}/>
     )
 }
 

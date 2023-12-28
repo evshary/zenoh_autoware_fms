@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAP_PATH="carla_map/Town01"
+MAP_PATH="frontend/public/carla_map/Town01"
 
 # Install gdown
 python3 -m pip install --upgrade gdown
