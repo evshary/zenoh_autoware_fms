@@ -2,6 +2,8 @@
 
 The project is the FMS (fleet management system) prototype of Autoware based on Zenoh.
 
+![](resource/Autoware_FMS_Zenoh_Architecture.svg)
+
 # Usage
 
 * Install prerequisite
