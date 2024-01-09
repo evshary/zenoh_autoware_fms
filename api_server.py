@@ -24,6 +24,7 @@ session = zenoh.open(conf)
 use_bridge_ros2dds = False
 manual_controller = None
 mjpeg_server = None
+pose_service = None
 
 @app.get("/")
 async def root():
@@ -120,4 +121,32 @@ async def manage_teleop_status():
             'velocity': '---',
             'gear': '---',
             'steering': '---'
+        }
+
+
+@app.get("/map/startup")
+async def manage_map_startup(scope):
+    global pose_service
+    if manual_controller is not None:
+        manual_controller.stop_teleop()
+    manual_controller = ManualController(session, scope, use_bridge_ros2dds)
+
+    return {
+        "text": f"Startup manual control on {scope}."
+    }
+
+@app.get("/map/pose")
+async def get_vehicle_pose():
+    global pose_service
+    if pose_service is not None:
+        return {
+            'lat': pose_service.lat,
+            'lon': pose_service.lon,
+            'startup': True
+        }
+    else:
+        return {
+            'lat': 0.0,
+            'lon': 0.0,
+            'startup': False
         }

@@ -4,6 +4,7 @@ import modalSlice from '../features/common/modalSlice'
 import rightDrawerSlice from '../features/common/rightDrawerSlice'
 import listSlice from '../features/fms/vehiclelist/vehiclelistSlice'
 import teleopSlice from '../features/fms/remotedrive/remoteDriveSlice'
+import mapViewSlice from '../features/fms/mapview/mapViewSlice'
 
 
 const combinedReducer = {
@@ -11,7 +12,8 @@ const combinedReducer = {
   rightDrawer : rightDrawerSlice,
   modal : modalSlice,
   list : listSlice,
-  teleop: teleopSlice
+  teleop: teleopSlice,
+  mapview: mapViewSlice
 }
 
 export default configureStore({
