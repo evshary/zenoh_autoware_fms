@@ -7,6 +7,10 @@ from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.common_interfaces import Header
 from zenoh_ros_type.common_interfaces import Pose, Twist, Vector3
 
+from lanelet2.projection import UtmProjector
+from lanelet2.core.io import Origin
+from lanelet2.core import BasicPoint3d, GPSPoint
+
 @dataclass
 class GeoPoint(IdlStruct, typename="GeoPoint"):
     latitude: float64
@@ -75,6 +79,7 @@ class PoseServer():
         self.service_prefix = scope if use_bridge_ros2dds else scope + '/rq'
 
         def callback_position(sample):
+            print("Got message of kinematics of vehicle")
             data = VehicleKinematics.deserialize(sample.payload)
             self.positionX = data.pose.pose.x
             self.positionY = data.pose.pose.y
@@ -91,9 +96,12 @@ class PoseServer():
         ###### Publishers
         self.publisher_engage = self.session.declare_publisher(self.service_prefix + SET_ENGAGE_KEY_EXPR)
     
-    def transform(self):
-        pass
-
+    def transform(self, originX=0.0, originY=0.0):
+        projector = UtmProjector(Origin(originX, originY))
+        gps = projector.reverse(BasicPoint3d(self.positionX, self.positionY, 0.0))
+        self.lat = gps.lat
+        self.lon = gps.lon
+        return
 
 if __name__ == "__main__":
     session = zenoh.open()
