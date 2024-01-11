@@ -13,11 +13,16 @@ L.Icon.Default.mergeOptions({
 
 const VehicleMarker = ({pose}) => {
     console.log(pose)
-    return pose[0] >= 0 && pose[1] >= 0 ? (
+    // return pose[0] >= 0 && pose[1] >= 0 ? (
+    //     <Marker position={pose}>
+    //         <Popup>vehicle</Popup>
+    //     </Marker>
+    // ) : null
+    return (
         <Marker position={pose}>
             <Popup>vehicle</Popup>
         </Marker>
-    ) : null
+    )
 }
 
 const GetCoordinates = () => {

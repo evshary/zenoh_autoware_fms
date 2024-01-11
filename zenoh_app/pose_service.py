@@ -42,6 +42,11 @@ class PoseWithCovariance(IdlStruct, typename="PoseWithCovariance"):
     covariance: sequence[float64]
 
 @dataclass
+class PoseStamped(IdlStruct, typename="PoseStamped"):
+    header: Header
+    pose: Pose
+
+@dataclass
 class PoseWithCovarianceStamped(IdlStruct, typename="PoseWithCovarianceStamped"):
     header: Header
     pose: PoseWithCovariance
@@ -79,7 +84,8 @@ class VehicleKinematics(IdlStruct, typename="VehicleKinematics"):
     accel: AccelWithCovarianceStamped
 
 
-GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
+# GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
+GET_POSE_KEY_EXPR = '/localization/pose_estimator/pose'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
 
 class PoseServer():
@@ -101,10 +107,14 @@ class PoseServer():
             print("Got message of kinematics of vehicle")
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             print(sample.payload)
-            data = VehicleKinematics.deserialize(sample.payload)
+            # data = VehicleKinematics.deserialize(sample.payload)
+            # print(data)
+            # self.positionX = data.pose.pose.x
+            # self.positionY = data.pose.pose.y
+            data = PoseStamped.deserialize(sample.payload)
+            self.positionX = data.pose.position.x
+            self.positionY = data.pose.position.y
             print(data)
-            self.positionX = data.pose.pose.x
-            self.positionY = data.pose.pose.y
             self.transform()
             print(self.lat, '|', self.lon)
 
