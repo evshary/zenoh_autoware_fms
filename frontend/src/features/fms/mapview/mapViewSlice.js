@@ -24,7 +24,7 @@ export const mapViewSlice = createSlice({
 		})
 		builder.addCase(selectVehicle.fulfilled, (state, action) => {
 			state.isLoading = false
-			state.teleopScope = action.payload
+			state.scope = action.payload
 			return state;
 		})
 		builder.addCase(selectVehicle.rejected, state => {

@@ -4,6 +4,7 @@ from zenoh_app.list_autoware import list_autoware
 from zenoh_app.status_autoware import *
 from zenoh_app.teleop_autoware import *
 from zenoh_app.camera_autoware import MJPEG_server
+from zenoh_app.pose_service import PoseServer
 import zenoh
 import math
 import websockets
@@ -127,9 +128,7 @@ async def manage_teleop_status():
 @app.get("/map/startup")
 async def manage_map_startup(scope):
     global pose_service
-    if manual_controller is not None:
-        manual_controller.stop_teleop()
-    manual_controller = ManualController(session, scope, use_bridge_ros2dds)
+    pose_service = PoseServer(session, scope)
 
     return {
         "text": f"Startup manual control on {scope}."

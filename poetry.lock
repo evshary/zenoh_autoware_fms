@@ -385,6 +385,19 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
+name = "lanelet2"
+version = "1.2.1"
+description = "Map handling framework for automated driving."
+optional = false
+python-versions = "*"
+files = [
+    {file = "lanelet2-1.2.1-cp310-cp310-manylinux_2_31_x86_64.whl", hash = "sha256:2ed515c4e0fdfb341f1858d1ca4fa64829c9c6d440fd323acc9420b914ea0621"},
+    {file = "lanelet2-1.2.1-cp311-cp311-manylinux_2_31_x86_64.whl", hash = "sha256:c06bfca859b1454da9799f33091a3e1cb72ee195fb893dd2b30f9ca733e35381"},
+    {file = "lanelet2-1.2.1-cp38-cp38-manylinux_2_27_x86_64.whl", hash = "sha256:6b1647511e512ae588edeb1607f14f098bae3163d4fe215930b9f3ccd8e85c9a"},
+    {file = "lanelet2-1.2.1-cp39-cp39-manylinux_2_27_x86_64.whl", hash = "sha256:7658f5e0254652f70b70c76af2a1d837a4a645a0675525fb4485d2cd8e15a627"},
+]
+
+[[package]]
 name = "markupsafe"
 version = "2.1.3"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1058,4 +1071,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "7f838b8de366402443d0ada85f7598ff4e3ec5b2ca8c40a981927863eba3cf8e"
+content-hash = "1c07e1c597f583568b093cfdf9f72aacc93e1b3578ac36f38990ae6ca314481d"
