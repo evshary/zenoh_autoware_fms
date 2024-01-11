@@ -5,7 +5,7 @@ from pycdr2 import IdlStruct
 from pycdr2.types import float32, float64, sequence, array
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.common_interfaces.std_msgs import Header
-from zenoh_ros_type.common_interfaces import Pose, Twist, Vector3
+from zenoh_ros_type.common_interfaces import Point, Twist, Vector3
 
 from lanelet2.projection import UtmProjector
 from lanelet2.io import Origin
@@ -23,6 +23,18 @@ class GeoPoint(IdlStruct, typename="GeoPoint"):
 class GeoPointStamped(IdlStruct, typename="GeoPointStamped"):
     header: Header
     position: GeoPoint
+
+@dataclass
+class Quaternion(IdlStruct, typename="Quaternion"):
+    x: float64
+    y: float64
+    z: float64
+    w: float64
+
+@dataclass
+class Pose(IdlStruct, typename="Pose"):
+    position: Point
+    orientation: Quaternion
 
 @dataclass
 class PoseWithCovariance(IdlStruct, typename="PoseWithCovariance"):
