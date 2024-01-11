@@ -4,12 +4,14 @@ from dataclasses import dataclass
 from pycdr2 import IdlStruct
 from pycdr2.types import float32, float64, sequence, array
 from zenoh_ros_type.rcl_interfaces import Time
-from zenoh_ros_type.common_interfaces import Header
+from zenoh_ros_type.common_interfaces.std_msgs import Header
 from zenoh_ros_type.common_interfaces import Pose, Twist, Vector3
 
 from lanelet2.projection import UtmProjector
-from lanelet2.core.io import Origin
+from lanelet2.io import Origin
 from lanelet2.core import BasicPoint3d, GPSPoint
+
+import struct
 
 @dataclass
 class GeoPoint(IdlStruct, typename="GeoPoint"):
@@ -25,7 +27,7 @@ class GeoPointStamped(IdlStruct, typename="GeoPointStamped"):
 @dataclass
 class PoseWithCovariance(IdlStruct, typename="PoseWithCovariance"):
     pose: Pose
-    covariance: array[float64, 36]
+    covariance: sequence[float64]
 
 @dataclass
 class PoseWithCovarianceStamped(IdlStruct, typename="PoseWithCovarianceStamped"):
@@ -33,9 +35,14 @@ class PoseWithCovarianceStamped(IdlStruct, typename="PoseWithCovarianceStamped")
     pose: PoseWithCovariance
 
 @dataclass
+class TwistWithCovariance(IdlStruct, typename="TwistWithCovariance"):
+    twist: Twist
+    covariance: sequence[float64]
+
+@dataclass
 class TwistWithCovarianceStamped(IdlStruct, typename="TwistWithCovarianceStamped"):
     header: Header
-    twist: Twist
+    twist: TwistWithCovariance
 
 @dataclass
 class Accel(IdlStruct, typename="Accel"):
@@ -45,7 +52,7 @@ class Accel(IdlStruct, typename="Accel"):
 @dataclass
 class AccelWithCovariance(IdlStruct, typename="AccelWithCovariance"):
     accel: Accel
-    covariance: array[float64, 36]
+    covariance: sequence[float64]
 
 @dataclass
 class AccelWithCovarianceStamped(IdlStruct, typename="AccelWithCovarianceStamped"):
@@ -80,14 +87,18 @@ class PoseServer():
 
         def callback_position(sample):
             print("Got message of kinematics of vehicle")
+            # print("size of the message (bytes) ", struct.calcsize(sample.payload))
+            print(sample.payload)
             data = VehicleKinematics.deserialize(sample.payload)
+            print(data)
             self.positionX = data.pose.pose.x
             self.positionY = data.pose.pose.y
             self.transform()
+            print(self.lat, '|', self.lon)
 
         ### Topics
         ###### Subscribers
-        self.subscriber_status = self.session.declare_subscriber(self.topic_prefix + GET_POSE_KEY_EXPR, callback_status)
+        self.subscriber_pose = self.session.declare_subscriber(self.topic_prefix + GET_POSE_KEY_EXPR, callback_position)
 
         ###### Publishers
         # self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
@@ -106,3 +117,7 @@ class PoseServer():
 if __name__ == "__main__":
     session = zenoh.open()
     mc = PoseServer(session, 'v1')
+    import time
+    while True:
+        time.sleep(1)
+    # msg = VehicleKinematics()

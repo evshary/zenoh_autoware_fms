@@ -64,6 +64,7 @@ function MapPanel() {
                 lat: response.data.lat,
                 lon: response.data.lon
             })
+            console.log(newPose);
             setVehiclePose(newPose)
         }
 

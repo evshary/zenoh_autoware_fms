@@ -20,6 +20,7 @@ werkzeug = "^2.3.7"
 pyyaml = "^6.0.1"
 uvicorn = {extras = ["standard"], version = "^0.24.0.post1"}
 asyncio = "^3.4.3"
+lanelet2 = "^1.2.1"
 
 [build-system]
 requires = ["poetry-core"]
