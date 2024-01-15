@@ -1,4 +1,4 @@
-import { useMap, MapContainer, Polyline, Marker, Popup } from 'react-leaflet';
+import { useMap, useMapEvents, MapContainer, Polyline, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet'
@@ -25,7 +25,7 @@ const VehicleMarker = ({pose}) => {
     )
 }
 
-const GetCoordinates = () => {
+const ShowCoordinates = () => {
     const map = useMap();
   
     useEffect(() => {
@@ -54,7 +54,24 @@ const GetCoordinates = () => {
   
     return null
   
-  }
+}
+
+const GetCoordinates = (props) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!map) return;
+
+        map.on('click', (e) => {
+          props.action(e.latlng);
+        })
+    
+      }, [map])
+
+
+    return null
+
+}
   
   
 
@@ -168,7 +185,7 @@ const MapViewer = (props) => {
                     ref={mapRef}
                     style={{height:600}} 
                     center={props.center} 
-                    zoom={13} 
+                    zoom={20} 
                     scrollWheelZoom={true} >
                         {/* <TileLayer
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -188,7 +205,8 @@ const MapViewer = (props) => {
                                 }
                             )
                         }
-                        <GetCoordinates />
+                        <ShowCoordinates />
+                        <GetCoordinates action={props.clickAction}/>
                         <VehicleMarker pose={props.marker}/>
                 </MapContainer>
             </div>
