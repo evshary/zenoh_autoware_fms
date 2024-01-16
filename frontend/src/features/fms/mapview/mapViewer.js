@@ -11,18 +11,12 @@ L.Icon.Default.mergeOptions({
     shadowUrl: require('leaflet/dist/images/marker-shadow.png')
 });
 
-const VehicleMarker = ({pose}) => {
-    console.log(pose)
-    // return pose[0] >= 0 && pose[1] >= 0 ? (
-    //     <Marker position={pose}>
-    //         <Popup>vehicle</Popup>
-    //     </Marker>
-    // ) : null
-    return (
+const VehicleMarker = ({pose, text}) => {
+    return pose.valid? (
         <Marker position={pose}>
-            <Popup>vehicle</Popup>
+            <Popup>{text}</Popup>
         </Marker>
-    )
+    ) : null
 }
 
 const ShowCoordinates = () => {
@@ -207,7 +201,9 @@ const MapViewer = (props) => {
                         }
                         <ShowCoordinates />
                         <GetCoordinates action={props.clickAction}/>
-                        <VehicleMarker pose={props.marker}/>
+                        <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/>
+                        <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/>
+                        <VehicleMarker pose={props.goalMarker} text={"Goal Position"}/>
                 </MapContainer>
             </div>
         )

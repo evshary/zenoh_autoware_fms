@@ -74,12 +74,32 @@ function MapPanel() {
         }
     })
 
-    const getCoordinate = (coordinate) => {
+
+    const [clickPose, setClickPose] = useState( () => {
         return {
-            lat: coordinate.lat,
-            lon: coordinate.lng,
-            valid: true
+            lat: 0.0,
+            lon: 0.0
         }
+    })
+
+
+    const selectInit = () => {
+        setAcquireGoal(false);
+        setAcquireInit(true);
+    }
+
+    const selectGoal = () => {
+        setAcquireInit(false);
+        setAcquireGoal(true);
+    }
+
+    const getCoordinate = (coordinate) => {
+        setClickPose({
+            lat: coordinate.lat,
+            lon: coordinate.lng
+        })
+        
+        return null;
     }
 
     useEffect(() => {
@@ -106,36 +126,71 @@ function MapPanel() {
 
     }, [mapScope])
 
+    useEffect(() => {
+        if (acquireInit && clickPose !== null) {
+          // Copy 'click' to 'goal'
+          setInitialPose({
+            lat: clickPose.lat,
+            lon: clickPose.lon,
+            valid: true
+          });
+    
+          // Set 'acquire' to false
+          setAcquireInit(false);
+        }
+        else if(acquireGoal && clickPose != null){
+            // Copy 'click' to 'goal'
+            setGoalPose({
+                lat: clickPose.lat,
+                lon: clickPose.lon,
+                valid: true
+            });
+        
+            // Set 'acquire' to false
+            setAcquireGoal(false);
+        }
+      }, [clickPose]);
+
     return (
         <>
             <TitleCard title="Map Viewer" TopSideButtons={<Refresh isLoading={refreshLoadinig}/>}>
-                <div className="grid grid-rows-5 grid-flow-col gap-4">
-                    <MapViewer classname="row-span-5 col-span-8 relative" xmlFile="/carla_map/Town01/lanelet2_map.osm" center={[0.0, 0.0]} marker={[vehiclePose.lat, vehiclePose.lon]} clickAction={getCoordinate}/>
-                    <div className="row-span-1 col-span-1">
-                        <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Select a vehicle</label>
-                        <div className="flex">
-                            <VehicleSelect state={list} ref={scopeRef} /> 
-                            <div className="inline-block w-1/4 p-2">
-                                <VehicleSelectButton text="Select" handleClick={selectVehicle} refon={scopeRef} isLoading={mapLoading} />
+                <div className="flex gap-4">
+                    <MapViewer 
+                        classname="w-3/5" 
+                        xmlFile="/carla_map/Town01/lanelet2_map.osm" 
+                        center={[0.0, 0.0]} 
+                        currentMarker={vehiclePose}
+                        initMarker={initialPose}
+                        goalMarker={goalPose}
+                        clickAction={getCoordinate}
+                    />
+                    <div className="w-2/5 grid grid-row-4">
+                        <div className="row-span-1 col-span-1">
+                            <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Select a vehicle</label>
+                            <div className="flex">
+                                <VehicleSelect state={list} ref={scopeRef} /> 
+                                <div className="inline-block w-1/4 p-2">
+                                    <VehicleSelectButton text="Select" handleClick={selectVehicle} refon={scopeRef} isLoading={mapLoading} />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="row-span-2 col-span-1 grid grid-rows-4 grid-flow-col gap-4">
-                        <h6 className="block mb-2 text-2xl font-medium text-gray-900 dark:text-white">Start a new planning</h6>
-                        <div className="row-span-1 grid grid-cols-4 gap-4" >
+                        <div className="row-span-2 col-span-1 grid grid-rows-4 grid-flow-col gap-4">
+                            <h6 className="block mb-2 text-2xl font-medium text-gray-900 dark:text-white">Start a new planning</h6>
+                            <div className="row-span-1 grid grid-cols-4 gap-4" >
                                 <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Initial Pose</label>
-                                <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">{(initialPose.valid)?(`(${initialPose.lat}, ${initialPose.lon})`):("(---, ---)")}</label>
-                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" >reselect</button>
+                                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{(initialPose.valid)?(`(${(initialPose.lat).toString().slice(0, 8)}, ${(initialPose.lon).toString().slice(0, 8)})`):("(---, ---)")}</label>
+                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" onClick={() => {selectInit()}}>reselect</button>
                                 <button className="btn px-6 btn-sm normal-case btn-info" >set</button>
-                        </div>
-                        <div className="row-span-1 grid grid-cols-4 gap-4">
+                            </div>
+                            <div className="row-span-1 grid grid-cols-4 gap-4">
                                 <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Goal Pose</label>
-                                <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">{(goalPose.valid)?(`(${goalPose.lat}, ${goalPose.lon})`):("(---, ---)")}</label>
-                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" >reselect</button>
+                                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{(goalPose.valid)?(`(${(goalPose.lat).toString().slice(0, 8)}, ${(goalPose.lon).toString().slice(0, 8)})`):("(---, ---)")}</label>
+                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case"  onClick={() => {selectGoal()}}>reselect</button>
                                 <button className="btn px-6 btn-sm normal-case btn-info" >set</button>
-                        </div>
-                        <div className="row-span-1 col-span-1">
-                            <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" >Engage</button>
+                            </div>
+                            <div className="row-span-1 col-span-1">
+                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" >Engage</button>
+                            </div>
                         </div>
                     </div>
                     
