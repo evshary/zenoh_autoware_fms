@@ -39,7 +39,7 @@ class Pose(IdlStruct, typename="Pose"):
 @dataclass
 class PoseWithCovariance(IdlStruct, typename="PoseWithCovariance"):
     pose: Pose
-    covariance: sequence[float64]
+    covariance: array[float64, 36]
 
 @dataclass
 class PoseStamped(IdlStruct, typename="PoseStamped"):
@@ -54,7 +54,7 @@ class PoseWithCovarianceStamped(IdlStruct, typename="PoseWithCovarianceStamped")
 @dataclass
 class TwistWithCovariance(IdlStruct, typename="TwistWithCovariance"):
     twist: Twist
-    covariance: sequence[float64]
+    covariance: array[float64, 36]
 
 @dataclass
 class TwistWithCovarianceStamped(IdlStruct, typename="TwistWithCovarianceStamped"):
@@ -69,7 +69,7 @@ class Accel(IdlStruct, typename="Accel"):
 @dataclass
 class AccelWithCovariance(IdlStruct, typename="AccelWithCovariance"):
     accel: Accel
-    covariance: sequence[float64]
+    covariance: array[float64, 36]
 
 @dataclass
 class AccelWithCovarianceStamped(IdlStruct, typename="AccelWithCovarianceStamped"):
@@ -84,8 +84,9 @@ class VehicleKinematics(IdlStruct, typename="VehicleKinematics"):
     accel: AccelWithCovarianceStamped
 
 
-# GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
-GET_POSE_KEY_EXPR = '/localization/pose_estimator/pose'
+GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
+# GET_POSE_KEY_EXPR = '/sensing/gnss/pose'
+# GET_POSE_KEY_EXPR = '/localization/pose_estimator/pose'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
 
 class PoseServer():
@@ -107,13 +108,13 @@ class PoseServer():
             print("Got message of kinematics of vehicle")
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             print(sample.payload)
-            # data = VehicleKinematics.deserialize(sample.payload)
+            data = VehicleKinematics.deserialize(sample.payload)
             # print(data)
-            # self.positionX = data.pose.pose.x
-            # self.positionY = data.pose.pose.y
-            data = PoseStamped.deserialize(sample.payload)
-            self.positionX = data.pose.position.x
-            self.positionY = data.pose.position.y
+            self.positionX = data.pose.pose.pose.position.x
+            self.positionY = data.pose.pose.pose.position.y
+            # data = PoseStamped.deserialize(sample.payload)
+            # self.positionX = data.pose.position.x
+            # self.positionY = data.pose.position.y
             print(data)
             self.transform()
             print(self.lat, '|', self.lon)
