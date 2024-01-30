@@ -8,7 +8,7 @@ import axios from 'axios'
 
 const VehicleSelect = forwardRef((props, ref) => {
     return (
-        <select ref={ref} className="bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/2 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        <select ref={ref} className={`${props.className} bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/2 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}>
             <option value="None">None</option>
             {
                 props.state.map((element, idx) => {
@@ -109,7 +109,8 @@ function MapPanel() {
             const response = await axios.get('/map/pose', {});
             let newPose = Object.assign({}, {
                 lat: response.data.lat,
-                lon: response.data.lon
+                lon: response.data.lon,
+                valid: true
             })
             console.log(newPose);
             setVehiclePose(newPose)
@@ -164,34 +165,37 @@ function MapPanel() {
                         goalMarker={goalPose}
                         clickAction={getCoordinate}
                     />
-                    <div className="w-2/5 grid grid-row-4">
-                        <div className="row-span-1 col-span-1">
-                            <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Select a vehicle</label>
-                            <div className="flex">
-                                <VehicleSelect state={list} ref={scopeRef} /> 
-                                <div className="inline-block w-1/4 p-2">
-                                    <VehicleSelectButton text="Select" handleClick={selectVehicle} refon={scopeRef} isLoading={mapLoading} />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="row-span-2 col-span-1 grid grid-rows-4 grid-flow-col gap-4">
+                    <div className="w-2/5 grid grid-rows-10 gap-2">
+                        <div className="row-span-1">
                             <h6 className="block mb-2 text-2xl font-medium text-gray-900 dark:text-white">Start a new planning</h6>
-                            <div className="row-span-1 grid grid-cols-4 gap-4" >
+                        </div>
+                        <div className="row-span-4 grid grid-rows-4 gap-4">
+                            {/* <div className="row-span-1 grid grid-cols-4 gap-4" >
                                 <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Initial Pose</label>
                                 <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{(initialPose.valid)?(`(${(initialPose.lat).toString().slice(0, 8)}, ${(initialPose.lon).toString().slice(0, 8)})`):("(---, ---)")}</label>
                                 <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" onClick={() => {selectInit()}}>reselect</button>
                                 <button className="btn px-6 btn-sm normal-case btn-info" >set</button>
+                            </div> */}
+                            <div className="row-span-1 col-span-1">
+                                <div className="flex">
+                                    <label className="w-1/3 block mb-2 text-lg font-medium text-gray-900 dark:text-white">Select a vehicle</label>
+                                    <VehicleSelect state={list} ref={scopeRef} className="w-2/5"/> 
+                                    <div className="inline-block w-1/5 p-2">
+                                        <VehicleSelectButton text="Select" handleClick={selectVehicle} refon={scopeRef} isLoading={mapLoading} />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="row-span-1 grid grid-cols-4 gap-4">
-                                <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Goal Pose</label>
-                                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{(goalPose.valid)?(`(${(goalPose.lat).toString().slice(0, 8)}, ${(goalPose.lon).toString().slice(0, 8)})`):("(---, ---)")}</label>
-                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case"  onClick={() => {selectGoal()}}>reselect</button>
-                                <button className="btn px-6 btn-sm normal-case btn-info" >set</button>
+                            <div className="row-span-1 grid grid-cols-5 gap-4">
+                                <label className="col-span-1 block mb-2 text-lg font-medium text-gray-900 dark:text-white">Goal Pose</label>
+                                <label className="col-span-2 block mb-2 text-lg font-medium text-gray-500 dark:text-white">{(goalPose.valid)?(`(${(goalPose.lat).toString().slice(0, 8)}, ${(goalPose.lon).toString().slice(0, 8)})`):("Reselect and click on map")}</label>
+                                <button className="col-span-1 bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case"  onClick={() => {selectGoal()}}>reselect</button>
+                                <button className="col-span-1 btn px-6 btn-sm normal-case btn-info" >set</button>
                             </div>
                             <div className="row-span-1 col-span-1">
                                 <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" >Engage</button>
                             </div>
                         </div>
+                        <div className="row-span-5"></div>
                     </div>
                     
                 </div>
