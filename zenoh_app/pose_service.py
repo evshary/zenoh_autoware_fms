@@ -6,12 +6,15 @@ from pycdr2.types import float32, float64, sequence, array
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.common_interfaces.std_msgs import Header
 from zenoh_ros_type.common_interfaces import Point, Twist, Vector3
+from zenoh_ros_type.autoware_auto_msgs import EngageRequest
+from zenoh_ros_type.service import ServiceHeader
 
 from lanelet2.projection import UtmProjector
 from lanelet2.io import Origin
 from lanelet2.core import BasicPoint3d, GPSPoint
 
 import struct
+from .map_parser import OrientationParser
 
 @dataclass
 class GeoPoint(IdlStruct, typename="GeoPoint"):
@@ -88,26 +91,32 @@ GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 # GET_POSE_KEY_EXPR = '/sensing/gnss/pose'
 # GET_POSE_KEY_EXPR = '/localization/pose_estimator/pose'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
+SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 
 class PoseServer():
     def __init__(self, session, scope, use_bridge_ros2dds=False):
         ### Information
+        self.use_bridge_ros2dds = use_bridge_ros2dds
         self.session = session
         self.scope = scope
+        self.initialize()
 
+    def initialize(self):
         self.lat = 0.0
         self.lon = 0.0
 
         self.positionX = 0.0
         self.positionY = 0.0
 
-        self.topic_prefix = scope if use_bridge_ros2dds else scope + '/rt'
-        self.service_prefix = scope if use_bridge_ros2dds else scope + '/rq'
+        self.topic_prefix = self.scope if self.use_bridge_ros2dds else self.scope + '/rt'
+        self.service_prefix = self.scope if self.use_bridge_ros2dds else self.scope + '/rq'
+
+        self.orientationGen = OrientationParser()
 
         def callback_position(sample):
             print("Got message of kinematics of vehicle")
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
-            print(sample.payload)
+            # print(sample.payload)
             data = VehicleKinematics.deserialize(sample.payload)
             # print(data)
             self.positionX = data.pose.pose.pose.position.x
@@ -125,17 +134,64 @@ class PoseServer():
 
         ###### Publishers
         # self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
+        self.publisher_goal = self.session.declare_publisher(self.topic_prefix + SET_GOAL_KEY_EXPR)
 
         ### Service
         ###### Publishers
         self.publisher_engage = self.session.declare_publisher(self.service_prefix + SET_ENGAGE_KEY_EXPR)
     
+
+    def change_scope(self, new_scope):
+        self.scope = new_scope
+        self.initialize()
+        
     def transform(self, originX=0.0, originY=0.0):
         projector = UtmProjector(Origin(originX, originY))
         gps = projector.reverse(BasicPoint3d(self.positionX, self.positionY, 0.0))
         self.lat = gps.lat
         self.lon = gps.lon
         return
+
+    def setGoal(self, lat, lon, originX=0.0, originY=0.0):
+        projector = UtmProjector(Origin(originX, originY))
+        coordinate = projector.forward(GPSPoint(float(lat), float(lon), 0))
+        q = self.orientationGen.genQuaternion_seg(coordinate.x, coordinate.y)
+        self.publisher_goal.put(
+            PoseStamped(
+                header=Header(
+                    stamp=Time(
+                        sec=0, 
+                        nanosec=0
+                    ), 
+                    frame_id='map'
+                ),
+                pose=Pose(
+                    position=Point(
+                        x=coordinate.x,
+                        y=coordinate.y,
+                        z=0
+                    ),
+                    orientation=Quaternion(
+                        x=q[0],
+                        y=q[1],
+                        z=q[2],
+                        w=q[3]
+                    )
+                )
+            ).serialize()
+        )
+
+    def engage(self):
+        self.publisher_engage.put(
+            EngageRequest(
+                ServiceHeader(
+                    guid=0,
+                    seq=0
+                ),
+                mode=True
+            ).serialize()
+        )
+
 
 if __name__ == "__main__":
     session = zenoh.open()
@@ -144,3 +200,21 @@ if __name__ == "__main__":
     while True:
         time.sleep(1)
     # msg = VehicleKinematics()
+
+
+
+# PoseStamped(header=Header(stamp=Time(sec=0,nanosec=0),frame_id=''),
+#                 pose=Pose(
+#                     position=Point(
+#                         x=coordinate.x,
+#                         y=coordinate.y,
+#                         z=0
+#                     ),
+#                     orientation=Quaternion(
+#                         x=q[0],
+#                         y=q[1],
+#                         z=q[2],
+#                         w=q[3]
+#                     )
+#                 )
+#             )

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux"
 import TitleCard from "../../../components/Cards/TitleCard"
 import  MapViewer  from "./mapViewer"
 import { Refresh } from "../vehiclelist"
-import { selectVehicle } from "./mapViewSlice"
+import { selectVehicle, setVehicleGoal, setEngage } from "./mapViewSlice"
 import axios from 'axios'
 
 const VehicleSelect = forwardRef((props, ref) => {
@@ -189,10 +189,10 @@ function MapPanel() {
                                 <label className="col-span-1 block mb-2 text-lg font-medium text-gray-900 dark:text-white">Goal Pose</label>
                                 <label className="col-span-2 block mb-2 text-lg font-medium text-gray-500 dark:text-white">{(goalPose.valid)?(`(${(goalPose.lat).toString().slice(0, 8)}, ${(goalPose.lon).toString().slice(0, 8)})`):("Reselect and click on map")}</label>
                                 <button className="col-span-1 bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case"  onClick={() => {selectGoal()}}>reselect</button>
-                                <button className="col-span-1 btn px-6 btn-sm normal-case btn-info" >set</button>
+                                <button className="col-span-1 btn px-6 btn-sm normal-case btn-info"  onClick={() => {(mapScope === 'None')? alert('Please select a vehicle first.') : setVehicleGoal(mapScope, goalPose.lat, goalPose.lon)}}>set</button>
                             </div>
                             <div className="row-span-1 col-span-1">
-                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" >Engage</button>
+                                <button className="bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case" onClick={() => {(mapScope === 'None')? alert('Please select a vehicle first.') : setEngage(mapScope)}}>Engage</button>
                             </div>
                         </div>
                         <div className="row-span-5"></div>

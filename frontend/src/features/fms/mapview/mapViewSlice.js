@@ -9,6 +9,16 @@ export const selectVehicle = createAsyncThunk('map/startup', async (scope) => {
     return scope
 })
 
+export const setVehicleGoal =  async (scope, lat, lon) => {
+	const response = await axios.get(`/map/setGoal?scope=${scope}&lat=${lat}&lon=${lon}`, {});
+	return response;
+}
+
+export const setEngage =  async (scope) => {
+	const response = await axios.get(`/map/engage?scope=${scope}`, {});
+	return response;
+}
+
 export const mapViewSlice = createSlice({
     name: 'mapview',
     initialState: {

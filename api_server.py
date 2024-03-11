@@ -128,7 +128,10 @@ async def manage_teleop_status():
 @app.get("/map/startup")
 async def manage_map_startup(scope):
     global pose_service
-    pose_service = PoseServer(session, scope)
+    if pose_service is  None:
+        pose_service = PoseServer(session, scope)
+    else:
+        pose_service.change_scope(scope)
 
     return {
         "text": f"Startup manual control on {scope}."
@@ -149,3 +152,26 @@ async def get_vehicle_pose():
             'lon': 0.0,
             'startup': False
         }
+
+@app.get("/map/setGoal")
+async def set_goal_pose(scope, lat, lon):
+    global pose_service
+    if pose_service is not None:
+        if scope != pose_service.scope:
+            pose_service.change_scope(scope)
+        print(f'[API SERVER] Set Goal Pose of {scope} as (lat={lat}, lon={lon})')
+        pose_service.setGoal(lat, lon)
+        return 'success'
+    else:
+        return 'fail'
+
+@app.get("/map/engage")
+async def set_goal_pose(scope):
+    global pose_service
+    if pose_service is not None:
+        if scope != pose_service.scope:
+            pose_service.change_scope(scope)
+        pose_service.engage()
+        return 'success'
+    else:
+        return 'fail'
