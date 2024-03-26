@@ -2,16 +2,26 @@ import { useMap, useMapEvents, MapContainer, Polyline, Marker, Popup } from 'rea
 import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet'
+// import { iconPerson } from './icon';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
     iconUrl: require('leaflet/dist/images/marker-icon.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+    shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    iconSize:[30, 30]
 });
 
-const VehicleMarker = ({pose, text}) => {
+
+const VehicleMarker = ({pose, text, type}) => {
+    if(type === 'current'){
+        return pose.valid? (
+            <Marker position={pose} icon={L.icon({iconUrl: require('./vehicle-removebg-preview.png'), iconSize:[60, 60]})}>
+                <Popup>{text}</Popup>
+            </Marker>
+        ) : null
+    }
     return pose.valid? (
         <Marker position={pose}>
             <Popup>{text}</Popup>
@@ -201,9 +211,19 @@ const MapViewer = (props) => {
                         }
                         <ShowCoordinates />
                         <GetCoordinates action={props.clickAction}/>
+                        {
+                            props.currentMarker.map( (p) => {
+                                    // console.log(points)
+                                    return (
+                                        <VehicleMarker pose={[p.lat, p.lon]} text={p.scope} type={"current"}/>
+                                    );
+                                }
+
+                            )
+                        }
                         <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/>
-                        <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/>
-                        <VehicleMarker pose={props.goalMarker} text={"Goal Position"}/>
+                        {/* <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/> */}
+                        <VehicleMarker pose={props.goalMarker} text={"Goal Position"} type={"goal"}/>
                 </MapContainer>
             </div>
         )

@@ -93,7 +93,8 @@ GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 
-class PoseServer():
+
+class VehiclePose():
     def __init__(self, session, scope, use_bridge_ros2dds=False):
         ### Information
         self.use_bridge_ros2dds = use_bridge_ros2dds
@@ -139,11 +140,6 @@ class PoseServer():
         ### Service
         ###### Publishers
         self.publisher_engage = self.session.declare_publisher(self.service_prefix + SET_ENGAGE_KEY_EXPR)
-    
-
-    def change_scope(self, new_scope):
-        self.scope = new_scope
-        self.initialize()
         
     def transform(self, originX=0.0, originY=0.0):
         projector = UtmProjector(Origin(originX, originY))
@@ -191,6 +187,54 @@ class PoseServer():
                 mode=True
             ).serialize()
         )
+
+
+class PoseServer():
+    def __init__(self, session, use_bridge_ros2dds=False):
+        self.use_bridge_ros2dds = use_bridge_ros2dds
+        self.session = session
+        self.vehicles = {}
+
+    def findVehicles(self, time=10):
+        for scope, vehicle in self.vehicles.items():
+            vehicle.subscriber_pose.undeclare()
+
+        self.vehicles = {}
+        for _ in range(time):
+            replies = self.session.get('**/rt/api/vehicle/kinematics', zenoh.Queue())
+            for reply in replies:
+                key_expr = str(reply.ok.key_expr)
+                if 'from_dds' in key_expr:
+                    end = key_expr.find('/rt/api/vehicle/kinematics')
+                    vehicle = key_expr[:end].split('/')[-1]
+                    self.vehicles[vehicle] = None
+        self.constructVehicle()
+
+    def constructVehicle(self, scope):
+        for scope in self.vehicles.keys():
+            self.vehicles[scope] = VehiclePose(session, scope)
+    
+    def returnPose(self):
+        poseInfo = []
+        for scope, vehicle in self.vehicles.items():
+            poseInfo.append(
+                {
+                    'name': scope,
+                    'lat': vehicle.lat,
+                    'lon': vehicle.lon
+                }
+            )
+        return poseInfo
+
+    def setGoal(self, scope, lat, lon):
+        if scope in self.vehicles.keys():
+            self.vehicles[scope].setGoal(lat, lon)
+
+    def engage(self, scope):
+        if scope in self.vehicles.keys():
+            self.vehicles[scope].engage()
+    
+
 
 
 if __name__ == "__main__":
