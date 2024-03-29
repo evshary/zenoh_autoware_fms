@@ -45,10 +45,22 @@ const SetGoalBtn = (props) => {
             </div>
         )
     }
-    
+    console.log('SetGoalBtn', typeof(props.pose.lat), props.pose.lon)
     return(
         <div className="inline-block float-right">
-            <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => {(props.refon.current === 'None')? alert('Please select a vehicle first.') : dispatch(setVehicleGoal(props.efon.current, props.pose.lat, props.pose.lon))}}>Set</button>
+            {/* <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => {(props.refon.current.value === 'None')? alert('Please select a vehicle first.') : dispatch(setVehicleGoal(props.refon.current.value, props.pose.lat, props.pose.lon))}}>Set</button> */}
+            <button className="btn px-6 btn-sm normal-case btn-primary" onClick={
+                () => {
+                    (props.refon.current.value === 'None')? alert('Please select a vehicle first.') :
+                    dispatch(
+                        setVehicleGoal({
+                            scope: props.refon.current.value, 
+                            lat: props.pose.lat, 
+                            lon: props.pose.lon
+                        })
+                    )
+                }
+            }>Set</button>
         </div>
     )
 }
@@ -57,7 +69,7 @@ const EngageBtn = (props) => {
     const dispatch = useDispatch()
     if(props.isLoading){
         return (
-            <div className="inline-block float-right">
+            <div className="inline-block">
                 <button className="btn px-6 btn-sm normal-case btn-primary">
                     <svg aria-hidden="true" role="status" className="inline w-4 h-4 mr-3 text-white animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="#E5E7EB"/>
@@ -70,8 +82,8 @@ const EngageBtn = (props) => {
     }
     
     return(
-        <div className="inline-block float-right">
-            <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => {(props.refon.current === 'None')? alert('Please select a vehicle first.') : dispatch(setEngage(props.refon.current))}}>Engage</button>
+        <div className="inline-block">
+            <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => {(props.refon.current.value === 'None')? alert('Please select a vehicle first.') : dispatch(setEngage(props.refon.current.value))}}>Engage</button>
         </div>
     )
 }
@@ -82,8 +94,8 @@ const VehicleSelect = forwardRef((props, ref) => {
             <option value="None">None</option>
             {
                 props.state.map((element, idx) => {
-                    var V = JSON.parse(element)
-                    return (<option key={V.name} value={V.name}>{V.name}</option>)
+                    // var V = JSON.parse(element)
+                    return (<option key={element} value={element}>{element}</option>)
                 })
             }
         </select>
@@ -147,7 +159,7 @@ function MapPanel() {
                 )
             });
             
-            console.log(newPose);
+            // console.log(newPose);
             setVehiclePose(newPose)
         }
 

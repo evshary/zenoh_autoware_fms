@@ -138,7 +138,7 @@ async def manage_teleop_status():
 #     }
 
 @app.get("/map/list")
-async def manage_list_autoware():
+async def get_vehilcle_list():
     global pose_service
     pose_service.findVehicles()
     return list(pose_service.vehicles.keys())
@@ -163,10 +163,10 @@ async def set_goal_pose(scope, lat, lon):
         return 'fail'
 
 @app.get("/map/engage")
-async def set_goal_pose(scope):
+async def set_engage(scope):
     global pose_service
     if pose_service is not None:
-        pose_service.engage()
+        pose_service.engage(scope)
         return 'success'
     else:
         return 'fail'

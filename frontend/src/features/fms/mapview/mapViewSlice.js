@@ -14,7 +14,8 @@ export const getVehicleList = createAsyncThunk('map/list', async () => {
 	return response.data
 })
 
-export const setVehicleGoal =  createAsyncThunk('map/setGoal', async (scope, lat, lon) => {
+export const setVehicleGoal =  createAsyncThunk('map/setGoal', async ({scope, lat, lon}) => {
+	console.log(lat)
 	const response = await axios.get(`/map/setGoal?scope=${scope}&lat=${lat}&lon=${lon}`, {});
 	return response;
 })
@@ -66,7 +67,7 @@ export const mapViewSlice = createSlice({
 			state.engageIsLoading = true
 			return state;
 		})
-		builder.addCase(setEngage.fulfilled, state => {
+		builder.addCase(setEngage.fulfilled, (state, action) => {
 			state.engageIsLoading = false
 			return state;
 		})

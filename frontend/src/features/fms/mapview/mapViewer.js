@@ -10,7 +10,7 @@ L.Icon.Default.mergeOptions({
     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
     iconUrl: require('leaflet/dist/images/marker-icon.png'),
     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-    iconSize:[30, 30]
+    iconSize:[20, 30]
 });
 
 
@@ -182,7 +182,7 @@ const MapViewer = (props) => {
         )
     }
     else {
-        console.log('ways', ways);
+        // console.log('ways', ways);
         return (
             <div className={props.classname}>
                 <MapContainer
@@ -213,15 +213,15 @@ const MapViewer = (props) => {
                         <GetCoordinates action={props.clickAction}/>
                         {
                             props.currentMarker.map( (p) => {
-                                    // console.log(points)
+                                    // console.log(p)
                                     return (
-                                        <VehicleMarker pose={[p.lat, p.lon]} text={p.scope} type={"current"}/>
+                                        <VehicleMarker pose={p} text={p.scope} type={"current"}/>
                                     );
                                 }
 
                             )
                         }
-                        <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/>
+                        {/* <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/> */}
                         {/* <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/> */}
                         <VehicleMarker pose={props.goalMarker} text={"Goal Position"} type={"goal"}/>
                 </MapContainer>

@@ -207,12 +207,13 @@ class PoseServer():
                 if 'from_dds' in key_expr:
                     end = key_expr.find('/rt/api/vehicle/kinematics')
                     vehicle = key_expr[:end].split('/')[-1]
+                    print(f'find vehicle {vehicle}')
                     self.vehicles[vehicle] = None
         self.constructVehicle()
 
-    def constructVehicle(self, scope):
+    def constructVehicle(self):
         for scope in self.vehicles.keys():
-            self.vehicles[scope] = VehiclePose(session, scope)
+            self.vehicles[scope] = VehiclePose(self.session, scope)
     
     def returnPose(self):
         poseInfo = []
