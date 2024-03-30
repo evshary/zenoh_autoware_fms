@@ -187,6 +187,10 @@ function MapPanel() {
             setAcquireGoal(false);
         }
       }, [clickPose]);
+    
+    const xmlFilePath = process.env.REACT_APP_MAP_FILE_PATH;
+    const originX = process.env.REACT_APP_MAP_ORIGIN_LAT;
+    const originY = process.env.REACT_APP_MAP_ORIGIN_LON;
 
     return (
         <>
@@ -194,8 +198,8 @@ function MapPanel() {
                 <div className="flex gap-4">
                     <MapViewer 
                         classname="w-3/5" 
-                        xmlFile="/carla_map/Town01/lanelet2_map.osm" 
-                        center={[0.0, 0.0]} 
+                        xmlFile={xmlFilePath} 
+                        center={[originX, originY]} 
                         currentMarker={vehiclePose}
                         goalMarker={goalPose}
                         clickAction={getCoordinate}

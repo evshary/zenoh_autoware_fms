@@ -6,6 +6,7 @@ import lanelet2
 import math
 
 import numpy as np
+import os
 
 def proj_between(p1, p2, p3):
     ### A segment p1 to p2
@@ -28,9 +29,9 @@ def vec2degree(v1, v2):
     
 
 class OrientationParser:
-    def __init__(self, path='frontend/public/carla_map/Town01/lanelet2_map.osm', originX=0, originY=0):
+    def __init__(self, path=f'frontend/public{os.environ["REACT_APP_MAP_FILE_PATH"]}', originX=os.environ["REACT_APP_MAP_ORIGIN_LAT"], originY=os.environ["REACT_APP_MAP_ORIGIN_LON"]):
         self.mapPath = path
-        self.proj = UtmProjector(Origin(originX, originY))
+        self.proj = UtmProjector(Origin(float(originX), float(originY)))
         self.vmap = lanelet2.io.load(path, self.proj)
         self.points = {}
         self.ways = {}

@@ -1,4 +1,4 @@
-import { useMap, useMapEvents, MapContainer, Polyline, Marker, Popup } from 'react-leaflet';
+import { useMap, MapContainer, Polyline, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet'
@@ -182,14 +182,24 @@ const MapViewer = (props) => {
         )
     }
     else {
-        // console.log('ways', ways);
+        let centerX = 0, centerY = 0;
+        let len = Object.keys(nodes).length;
+        Object.values(nodes).map((value) => {
+            centerX = centerX + value[0];
+            centerY = centerY + value[1];
+        });
+        centerX = centerX / len;
+        centerY = centerY / len;
+        // console.log(centerX, centerY)
+        
+
         return (
             <div className={props.classname}>
                 <MapContainer
                     ref={mapRef}
                     style={{height:600}} 
-                    center={props.center} 
-                    zoom={20} 
+                    center={[centerX, centerY]} 
+                    zoom={17} 
                     scrollWheelZoom={true} >
                         {/* <TileLayer
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
