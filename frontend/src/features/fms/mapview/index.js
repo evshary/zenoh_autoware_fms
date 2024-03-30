@@ -130,8 +130,8 @@ function MapPanel() {
     })
 
 
-    const selectGoal = () => {
-        setAcquireGoal(true);
+    const toggleSelectGoal = () => {
+        setAcquireGoal(prevState => !prevState);
     }
 
     const getCoordinate = (coordinate) => {
@@ -227,7 +227,14 @@ function MapPanel() {
                             <div className="row-span-1 grid grid-cols-5 gap-4">
                                 <label className="col-span-1 block mb-2 text-lg font-medium text-gray-900 dark:text-white">Goal Pose</label>
                                 <label className="col-span-2 block mb-2 text-lg font-medium text-gray-500 dark:text-white">{(goalPose.valid)?(`(${(goalPose.lat).toString().slice(0, 8)}, ${(goalPose.lon).toString().slice(0, 8)})`):("Reselect and click on map")}</label>
-                                <button className="col-span-1 bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case"  onClick={() => {selectGoal()}}>reselect</button>
+                                <button 
+                                    className={
+                                        (acquireGoal)?  "col-span-1 bg-blue hover:bg-white-500 text-white-700 btn px-6 btn-sm normal-case" :
+                                        "col-span-1 bg-transparent hover:bg-blue-500 text-blue-700 btn px-6 btn-sm normal-case"
+                                    }  
+                                    onClick={() => {toggleSelectGoal()}}>
+                                        {(acquireGoal)?"Cancel":"Select"}
+                                </button>
                                 <SetGoalBtn isLoading={setGoalLoading} refon={scopeRef} pose={goalPose}/>
                                 {/* <button className="col-span-1 btn px-6 btn-sm normal-case btn-info"  onClick={() => {(scopeRef.current === 'None')? alert('Please select a vehicle first.') : dispatch(setVehicleGoal(scopeRef.current, goalPose.lat, goalPose.lon))}}>set</button> */}
                             </div>
