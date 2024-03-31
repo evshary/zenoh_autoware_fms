@@ -151,6 +151,13 @@ async def get_vehicle_pose():
     else:
         return []
 
+@app.get("/map/goalPose")
+async def get_vehicle_pose():
+    global pose_service
+    if pose_service is not None:
+        return pose_service.returnGoalPose()
+    else:
+        return []
 
 @app.get("/map/setGoal")
 async def set_goal_pose(scope, lat, lon):

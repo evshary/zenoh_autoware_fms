@@ -45,7 +45,7 @@ const SetGoalBtn = (props) => {
             </div>
         )
     }
-    console.log('SetGoalBtn', typeof(props.pose.lat), props.pose.lon)
+    // console.log('SetGoalBtn', typeof(props.pose.lat), props.pose.lon)
     return(
         <div className="inline-block float-right">
             {/* <button className="btn px-6 btn-sm normal-case btn-primary" onClick={() => {(props.refon.current.value === 'None')? alert('Please select a vehicle first.') : dispatch(setVehicleGoal(props.refon.current.value, props.pose.lat, props.pose.lon))}}>Set</button> */}
@@ -59,6 +59,11 @@ const SetGoalBtn = (props) => {
                             lon: props.pose.lon
                         })
                     )
+                    props.action({
+                        lat: props.pose.lat,
+                        lon: props.pose.lon,
+                        valid: false
+                    })
                 }
             }>Set</button>
         </div>
@@ -112,13 +117,9 @@ function MapPanel() {
     const [vehiclePose, setVehiclePose] = useState([])
 
     const [acquireGoal, setAcquireGoal] = useState(false);
-    const [goalPose, setGoalPose] = useState( () => {
-        return {
-            lat: 0.0,
-            lon: 0.0,
-            valid: false
-        }
-    })
+    const [goalPose, setGoalPose] = useState([])
+
+    const [zoomLevel, setZoomLevel] = useState(17)
 
 
 
@@ -126,6 +127,14 @@ function MapPanel() {
         return {
             lat: 0.0,
             lon: 0.0
+        }
+    })
+
+    const [goalCandidate, setGoalCandidate] = useState( () => {
+        return {
+            lat: 0.0,
+            lon: 0.0,
+            valid: false
         }
     })
 
@@ -163,13 +172,36 @@ function MapPanel() {
             setVehiclePose(newPose)
         }
 
+        const getGoalPose = async () => {
+            const response = await axios.get('/map/goalPose', {});
+            let newPose = [];
+            response.data.forEach(e => {
+                newPose.push(
+                    Object.assign({}, {
+                        scope: e.name,
+                        lat: e.lat,
+                        lon: e.lon,
+                        valid: true
+                    })
+                )
+            });
+            
+            // console.log(newPose);
+            setGoalPose(newPose)
+        }
 
-        /* Get status of vehicle every 1 sec after startup */
+
+
+        /* Get current pose of vehicle every 1 sec after startup */
         const get_pose_interval = setInterval(getVehiclePose, 1000)
+
+        /* Get goal pose of vehicle every 1 sec after startup */
+        const get_goalPose_interval = setInterval(getGoalPose, 1000)
 
         /* Clear the timer when unmount */
         return () => {
             clearInterval(get_pose_interval)
+            clearInterval(get_goalPose_interval)
         }
 
     }, [])
@@ -177,7 +209,7 @@ function MapPanel() {
     useEffect(() => {
         if(acquireGoal && clickPose != null){
             // Copy 'click' to 'goal'
-            setGoalPose({
+            setGoalCandidate({
                 lat: clickPose.lat,
                 lon: clickPose.lon,
                 valid: true
@@ -202,7 +234,10 @@ function MapPanel() {
                         center={[originX, originY]} 
                         currentMarker={vehiclePose}
                         goalMarker={goalPose}
+                        setGoalMarker={goalCandidate}
                         clickAction={getCoordinate}
+                        zoomLevel={zoomLevel}
+                        zoomAction={setZoomLevel}
                     />
                     <div className="w-2/5 grid grid-rows-10 gap-2">
                         <div className="row-span-1">
@@ -226,7 +261,7 @@ function MapPanel() {
                             </div>
                             <div className="row-span-1 grid grid-cols-5 gap-4">
                                 <label className="col-span-1 block mb-2 text-lg font-medium text-gray-900 dark:text-white">Goal Pose</label>
-                                <label className="col-span-2 block mb-2 text-lg font-medium text-gray-500 dark:text-white">{(goalPose.valid)?(`(${(goalPose.lat).toString().slice(0, 8)}, ${(goalPose.lon).toString().slice(0, 8)})`):("Reselect and click on map")}</label>
+                                <label className="col-span-2 block mb-2 text-lg font-medium text-gray-500 dark:text-white">{(goalCandidate.valid)?(`(${(goalCandidate.lat).toString().slice(0, 8)}, ${(goalCandidate.lon).toString().slice(0, 8)})`):("Reselect and click on map")}</label>
                                 <button 
                                     className={
                                         (acquireGoal)?  "col-span-1 bg-blue hover:bg-white-500 text-white-700 btn px-6 btn-sm normal-case" :
@@ -235,7 +270,7 @@ function MapPanel() {
                                     onClick={() => {toggleSelectGoal()}}>
                                         {(acquireGoal)?"Cancel":"Select"}
                                 </button>
-                                <SetGoalBtn isLoading={setGoalLoading} refon={scopeRef} pose={goalPose}/>
+                                <SetGoalBtn isLoading={setGoalLoading} refon={scopeRef} pose={goalCandidate} action={setGoalCandidate} />
                                 {/* <button className="col-span-1 btn px-6 btn-sm normal-case btn-info"  onClick={() => {(scopeRef.current === 'None')? alert('Please select a vehicle first.') : dispatch(setVehicleGoal(scopeRef.current, goalPose.lat, goalPose.lon))}}>set</button> */}
                             </div>
                             <div className="row-span-1 col-span-1">

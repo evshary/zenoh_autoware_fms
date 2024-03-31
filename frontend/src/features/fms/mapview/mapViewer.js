@@ -14,16 +14,23 @@ L.Icon.Default.mergeOptions({
 });
 
 
-const VehicleMarker = ({pose, text, type}) => {
+const VehicleMarker = ({pose, text, type, zoom}) => {
     if(type === 'current'){
         return pose.valid? (
-            <Marker position={pose} icon={L.icon({iconUrl: require('./vehicle-removebg-preview.png'), iconSize:[60, 60]})}>
+            <Marker position={pose} icon={L.icon({iconUrl: "/car.png", iconSize:[zoom, zoom]})}>
+                <Popup>{text}</Popup>
+            </Marker>
+        ) : null
+    }
+    else if(type == 'goal'){
+        return pose.valid? (
+            <Marker position={pose} icon={L.icon({iconUrl: "/locator.png", iconSize:[zoom * (2/3), zoom]})}>
                 <Popup>{text}</Popup>
             </Marker>
         ) : null
     }
     return pose.valid? (
-        <Marker position={pose}>
+        <Marker position={pose} icon={L.icon({iconUrl: require('leaflet/dist/images/marker-icon-2x.png'), iconSize:[zoom * (2/3), zoom]})}>
             <Popup>{text}</Popup>
         </Marker>
     ) : null
@@ -77,6 +84,22 @@ const GetCoordinates = (props) => {
 
 }
   
+const GetZoom = (props) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!map) return;
+
+        map.on('zoom', (e) => {
+            props.action(e.target._zoom);
+        })
+    
+      }, [map])
+
+
+    return null
+
+}
   
 
 
@@ -199,7 +222,7 @@ const MapViewer = (props) => {
                     ref={mapRef}
                     style={{height:600}} 
                     center={[centerX, centerY]} 
-                    zoom={17} 
+                    zoom={props.zoomLevel}
                     scrollWheelZoom={true} >
                         {/* <TileLayer
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -220,12 +243,13 @@ const MapViewer = (props) => {
                             )
                         }
                         <ShowCoordinates />
+                        <GetZoom action={props.zoomAction} />
                         <GetCoordinates action={props.clickAction}/>
                         {
                             props.currentMarker.map( (p) => {
                                     // console.log(p)
                                     return (
-                                        <VehicleMarker pose={p} text={p.scope} type={"current"}/>
+                                        <VehicleMarker pose={p} text={p.scope} type={"current"} zoom={props.zoomLevel}/>
                                     );
                                 }
 
@@ -233,7 +257,16 @@ const MapViewer = (props) => {
                         }
                         {/* <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/> */}
                         {/* <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/> */}
-                        <VehicleMarker pose={props.goalMarker} text={"Goal Position"} type={"goal"}/>
+                        {
+                            props.goalMarker.map( (p) => {
+                                    return (
+                                        <VehicleMarker pose={p} text={`Goal of ${p.scope}`} type={"goal"} zoom={props.zoomLevel}/>
+                                    );
+                                }
+
+                            )
+                        }
+                        <VehicleMarker pose={props.setGoalMarker} text={"Goal Position"} type={"setGoal"} zoom={props.zoomLevel}/>
                 </MapContainer>
             </div>
         )

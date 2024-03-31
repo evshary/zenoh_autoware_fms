@@ -16,6 +16,8 @@ from lanelet2.core import BasicPoint3d, GPSPoint
 import struct
 from .map_parser import OrientationParser
 
+import os
+
 @dataclass
 class GeoPoint(IdlStruct, typename="GeoPoint"):
     latitude: float64
@@ -90,6 +92,7 @@ class VehicleKinematics(IdlStruct, typename="VehicleKinematics"):
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 # GET_POSE_KEY_EXPR = '/sensing/gnss/pose'
 # GET_POSE_KEY_EXPR = '/localization/pose_estimator/pose'
+GET_GOAL_POSE_KEY_EXPR = '/planning/mission_planning/echo_back_goal_pose'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 
@@ -100,6 +103,14 @@ class VehiclePose():
         self.use_bridge_ros2dds = use_bridge_ros2dds
         self.session = session
         self.scope = scope
+        self.originX=float(os.environ["REACT_APP_MAP_ORIGIN_LAT"])
+        self.originY=float(os.environ["REACT_APP_MAP_ORIGIN_LON"])
+        self.projector = UtmProjector(
+            Origin(
+                self.originX, 
+                self.originY
+            )
+        )
         self.initialize()
 
     def initialize(self):
@@ -114,6 +125,12 @@ class VehiclePose():
 
         self.orientationGen = OrientationParser()
 
+        self.goalX = 0.0
+        self.goalY = 0.0
+        self.goalLat = 0.0
+        self.goalLon = 0.0
+        self.goalValid = False
+
         def callback_position(sample):
             print("Got message of kinematics of vehicle")
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
@@ -122,16 +139,27 @@ class VehiclePose():
             # print(data)
             self.positionX = data.pose.pose.pose.position.x
             self.positionY = data.pose.pose.pose.position.y
-            # data = PoseStamped.deserialize(sample.payload)
-            # self.positionX = data.pose.position.x
-            # self.positionY = data.pose.position.y
-            print(data)
-            self.transform()
-            print(self.lat, '|', self.lon)
+            gps = self.projector.reverse(BasicPoint3d(self.positionX, self.positionY, 0.0))
+            self.lat = gps.lat
+            self.lon = gps.lon
+
+        def callback_goalPosition(sample):
+            print("Got message of kinematics of vehicle")
+            # print("size of the message (bytes) ", struct.calcsize(sample.payload))
+            # print(sample.payload)
+            data = PoseStamped.deserialize(sample.payload)
+            # print(data)
+            self.goalX = data.pose.position.x
+            self.goalY = data.pose.position.y
+            gps = self.projector.reverse(BasicPoint3d(self.goalX, self.goalY, 0.0))
+            self.goalLat = gps.lat
+            self.goalLon = gps.lon
+            self.goalValid = True
 
         ### Topics
         ###### Subscribers
         self.subscriber_pose = self.session.declare_subscriber(self.topic_prefix + GET_POSE_KEY_EXPR, callback_position)
+        self.subscriber_goalPose = self.session.declare_subscriber(self.topic_prefix + GET_GOAL_POSE_KEY_EXPR, callback_goalPosition)
 
         ###### Publishers
         # self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
@@ -140,17 +168,10 @@ class VehiclePose():
         ### Service
         ###### Publishers
         self.publisher_engage = self.session.declare_publisher(self.service_prefix + SET_ENGAGE_KEY_EXPR)
-        
-    def transform(self, originX=0.0, originY=0.0):
-        projector = UtmProjector(Origin(originX, originY))
-        gps = projector.reverse(BasicPoint3d(self.positionX, self.positionY, 0.0))
-        self.lat = gps.lat
-        self.lon = gps.lon
-        return
 
-    def setGoal(self, lat, lon, originX=0.0, originY=0.0):
-        projector = UtmProjector(Origin(originX, originY))
-        coordinate = projector.forward(GPSPoint(float(lat), float(lon), 0))
+
+    def setGoal(self, lat, lon):
+        coordinate = self.projector.forward(GPSPoint(float(lat), float(lon), 0))
         q = self.orientationGen.genQuaternion_seg(coordinate.x, coordinate.y)
         self.publisher_goal.put(
             PoseStamped(
@@ -226,6 +247,19 @@ class PoseServer():
                 }
             )
         return poseInfo
+        
+    def returnGoalPose(self): ### TODO
+        goalPoseInfo = []
+        for scope, vehicle in self.vehicles.items():
+            if vehicle.goalValid:
+                goalPoseInfo.append(
+                    {
+                        'name': scope,
+                        'lat': vehicle.goalLat,
+                        'lon': vehicle.goalLon
+                    }
+                )
+        return goalPoseInfo
 
     def setGoal(self, scope, lat, lon):
         if scope in self.vehicles.keys():
