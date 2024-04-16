@@ -1,13 +1,15 @@
 import zenoh
 import time
-from dataclasses import dataclass
-from pycdr2 import IdlStruct
-from pycdr2.types import float32, float64, sequence, array
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.common_interfaces.std_msgs import Header
-from zenoh_ros_type.common_interfaces import Point, Twist, Vector3
+from zenoh_ros_type.common_interfaces import Point, Quaternion, Vector3
+from zenoh_ros_type.common_interfaces import Pose, PoseStamped, PoseWithCovariance, PoseWithCovarianceStamped
+from zenoh_ros_type.common_interfaces import Twist, TwistWithCovariance, TwistWithCovarianceStamped
+from zenoh_ros_type.common_interfaces import Accel, AccelWithCovariance, AccelWithCovarianceStamped
 from zenoh_ros_type.autoware_auto_msgs import EngageRequest
 from zenoh_ros_type.service import ServiceHeader
+from zenoh_ros_type.geographic_info import GeoPoint, GeoPointStamped
+from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
 
 from lanelet2.projection import UtmProjector
 from lanelet2.io import Origin
@@ -18,80 +20,9 @@ from .map_parser import OrientationParser
 
 import os
 
-@dataclass
-class GeoPoint(IdlStruct, typename="GeoPoint"):
-    latitude: float64
-    longitude: float64
-    altitude: float64
-
-@dataclass
-class GeoPointStamped(IdlStruct, typename="GeoPointStamped"):
-    header: Header
-    position: GeoPoint
-
-@dataclass
-class Quaternion(IdlStruct, typename="Quaternion"):
-    x: float64
-    y: float64
-    z: float64
-    w: float64
-
-@dataclass
-class Pose(IdlStruct, typename="Pose"):
-    position: Point
-    orientation: Quaternion
-
-@dataclass
-class PoseWithCovariance(IdlStruct, typename="PoseWithCovariance"):
-    pose: Pose
-    covariance: array[float64, 36]
-
-@dataclass
-class PoseStamped(IdlStruct, typename="PoseStamped"):
-    header: Header
-    pose: Pose
-
-@dataclass
-class PoseWithCovarianceStamped(IdlStruct, typename="PoseWithCovarianceStamped"):
-    header: Header
-    pose: PoseWithCovariance
-
-@dataclass
-class TwistWithCovariance(IdlStruct, typename="TwistWithCovariance"):
-    twist: Twist
-    covariance: array[float64, 36]
-
-@dataclass
-class TwistWithCovarianceStamped(IdlStruct, typename="TwistWithCovarianceStamped"):
-    header: Header
-    twist: TwistWithCovariance
-
-@dataclass
-class Accel(IdlStruct, typename="Accel"):
-    linear: Vector3
-    angular: Vector3
-
-@dataclass
-class AccelWithCovariance(IdlStruct, typename="AccelWithCovariance"):
-    accel: Accel
-    covariance: array[float64, 36]
-
-@dataclass
-class AccelWithCovarianceStamped(IdlStruct, typename="AccelWithCovarianceStamped"):
-    header: Header
-    accel: AccelWithCovariance
-
-@dataclass
-class VehicleKinematics(IdlStruct, typename="VehicleKinematics"):
-    geographic_pose: GeoPointStamped
-    pose: PoseWithCovarianceStamped
-    twist: TwistWithCovarianceStamped
-    accel: AccelWithCovarianceStamped
 
 
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
-# GET_POSE_KEY_EXPR = '/sensing/gnss/pose'
-# GET_POSE_KEY_EXPR = '/localization/pose_estimator/pose'
 GET_GOAL_POSE_KEY_EXPR = '/planning/mission_planning/echo_back_goal_pose'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
@@ -280,20 +211,3 @@ if __name__ == "__main__":
         time.sleep(1)
     # msg = VehicleKinematics()
 
-
-
-# PoseStamped(header=Header(stamp=Time(sec=0,nanosec=0),frame_id=''),
-#                 pose=Pose(
-#                     position=Point(
-#                         x=coordinate.x,
-#                         y=coordinate.y,
-#                         z=0
-#                     ),
-#                     orientation=Quaternion(
-#                         x=q[0],
-#                         y=q[1],
-#                         z=q[2],
-#                         w=q[3]
-#                     )
-#                 )
-#             )
