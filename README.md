@@ -15,7 +15,8 @@ The project is the FMS (fleet management system) prototype of Autoware based on 
 * Run Web Server & API Server
 
 ```shell
-# Source ROS 2 environment
+# Before the following steps, please source ROS 2 environment
+source env.sh
 ./run_server.sh
 ```
 

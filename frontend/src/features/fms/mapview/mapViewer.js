@@ -1,19 +1,36 @@
-import { useMap, useMapEvents, MapContainer, Polyline, Marker, Popup } from 'react-leaflet';
+import { useMap, MapContainer, Polyline, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet'
+// import { iconPerson } from './icon';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
     iconUrl: require('leaflet/dist/images/marker-icon.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+    shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    iconSize:[20, 30]
 });
 
-const VehicleMarker = ({pose, text}) => {
+
+const VehicleMarker = ({pose, text, type, zoom}) => {
+    if(type === 'current'){
+        return pose.valid? (
+            <Marker position={pose} icon={L.icon({iconUrl: "/car.png", iconSize:[zoom, zoom]})}>
+                <Popup>{text}</Popup>
+            </Marker>
+        ) : null
+    }
+    else if(type == 'goal'){
+        return pose.valid? (
+            <Marker position={pose} icon={L.icon({iconUrl: "/locator.png", iconSize:[zoom * (2/3), zoom]})}>
+                <Popup>{text}</Popup>
+            </Marker>
+        ) : null
+    }
     return pose.valid? (
-        <Marker position={pose}>
+        <Marker position={pose} icon={L.icon({iconUrl: require('leaflet/dist/images/marker-icon-2x.png'), iconSize:[zoom * (2/3), zoom]})}>
             <Popup>{text}</Popup>
         </Marker>
     ) : null
@@ -67,6 +84,22 @@ const GetCoordinates = (props) => {
 
 }
   
+const GetZoom = (props) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!map) return;
+
+        map.on('zoom', (e) => {
+            props.action(e.target._zoom);
+        })
+    
+      }, [map])
+
+
+    return null
+
+}
   
 
 
@@ -172,14 +205,24 @@ const MapViewer = (props) => {
         )
     }
     else {
-        console.log('ways', ways);
+        let centerX = 0, centerY = 0;
+        let len = Object.keys(nodes).length;
+        Object.values(nodes).map((value) => {
+            centerX = centerX + value[0];
+            centerY = centerY + value[1];
+        });
+        centerX = centerX / len;
+        centerY = centerY / len;
+        // console.log(centerX, centerY)
+        
+
         return (
             <div className={props.classname}>
                 <MapContainer
                     ref={mapRef}
                     style={{height:600}} 
-                    center={props.center} 
-                    zoom={20} 
+                    center={[centerX, centerY]} 
+                    zoom={props.zoomLevel}
                     scrollWheelZoom={true} >
                         {/* <TileLayer
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -200,10 +243,30 @@ const MapViewer = (props) => {
                             )
                         }
                         <ShowCoordinates />
+                        <GetZoom action={props.zoomAction} />
                         <GetCoordinates action={props.clickAction}/>
-                        <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/>
-                        <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/>
-                        <VehicleMarker pose={props.goalMarker} text={"Goal Position"}/>
+                        {
+                            props.currentMarker.map( (p) => {
+                                    // console.log(p)
+                                    return (
+                                        <VehicleMarker pose={p} text={p.scope} type={"current"} zoom={props.zoomLevel}/>
+                                    );
+                                }
+
+                            )
+                        }
+                        {/* <VehicleMarker pose={props.currentMarker} text={"Ego Position"}/> */}
+                        {/* <VehicleMarker pose={props.initMarker} text={"Initialized Position"}/> */}
+                        {
+                            props.goalMarker.map( (p) => {
+                                    return (
+                                        <VehicleMarker pose={p} text={`Goal of ${p.scope}`} type={"goal"} zoom={props.zoomLevel}/>
+                                    );
+                                }
+
+                            )
+                        }
+                        <VehicleMarker pose={props.setGoalMarker} text={"Goal Position"} type={"setGoal"} zoom={props.zoomLevel}/>
                 </MapContainer>
             </div>
         )

@@ -25,7 +25,7 @@ session = zenoh.open(conf)
 use_bridge_ros2dds = False
 manual_controller = None
 mjpeg_server = None
-pose_service = None
+pose_service = PoseServer(session, use_bridge_ros2dds)
 
 @app.get("/")
 async def root():
@@ -125,27 +125,55 @@ async def manage_teleop_status():
         }
 
 
-@app.get("/map/startup")
-async def manage_map_startup(scope):
-    global pose_service
-    pose_service = PoseServer(session, scope)
+# @app.get("/map/startup")
+# async def manage_map_startup(scope):
+#     global pose_service
+#     if pose_service is  None:
+#         pose_service = PoseServer(session, scope)
+#     else:
+#         pose_service.change_scope(scope)
 
-    return {
-        "text": f"Startup manual control on {scope}."
-    }
+#     return {
+#         "text": f"Startup manual control on {scope}."
+#     }
+
+@app.get("/map/list")
+async def get_vehilcle_list():
+    global pose_service
+    pose_service.findVehicles()
+    return list(pose_service.vehicles.keys())
 
 @app.get("/map/pose")
 async def get_vehicle_pose():
     global pose_service
     if pose_service is not None:
-        return {
-            'lat': pose_service.lat,
-            'lon': pose_service.lon,
-            'startup': True
-        }
+        return pose_service.returnPose()
     else:
-        return {
-            'lat': 0.0,
-            'lon': 0.0,
-            'startup': False
-        }
+        return []
+
+@app.get("/map/goalPose")
+async def get_vehicle_pose():
+    global pose_service
+    if pose_service is not None:
+        return pose_service.returnGoalPose()
+    else:
+        return []
+
+@app.get("/map/setGoal")
+async def set_goal_pose(scope, lat, lon):
+    global pose_service
+    if pose_service is not None:
+        print(f'[API SERVER] Set Goal Pose of {scope} as (lat={lat}, lon={lon})')
+        pose_service.setGoal(scope, lat, lon)
+        return 'success'
+    else:
+        return 'fail'
+
+@app.get("/map/engage")
+async def set_engage(scope):
+    global pose_service
+    if pose_service is not None:
+        pose_service.engage(scope)
+        return 'success'
+    else:
+        return 'fail'

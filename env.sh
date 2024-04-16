@@ -1,0 +1,3 @@
+export REACT_APP_MAP_FILE_PATH=/carla_map/Town01/lanelet2_map.osm
+export REACT_APP_MAP_ORIGIN_LAT=0
+export REACT_APP_MAP_ORIGIN_LON=0
