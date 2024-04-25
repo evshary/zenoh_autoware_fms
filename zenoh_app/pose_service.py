@@ -10,6 +10,7 @@ from zenoh_ros_type.autoware_auto_msgs import EngageRequest
 from zenoh_ros_type.service import ServiceHeader
 from zenoh_ros_type.geographic_info import GeoPoint, GeoPointStamped
 from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
+from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
 from lanelet2.projection import UtmProjector
 from lanelet2.io import Origin
@@ -26,6 +27,7 @@ GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 GET_GOAL_POSE_KEY_EXPR = '/planning/mission_planning/echo_back_goal_pose'
 SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
+SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 
 
 class VehiclePose():
@@ -93,13 +95,13 @@ class VehiclePose():
         self.subscriber_goalPose = self.session.declare_subscriber(self.topic_prefix + GET_GOAL_POSE_KEY_EXPR, callback_goalPosition)
 
         ###### Publishers
-        # self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
+        self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
         self.publisher_goal = self.session.declare_publisher(self.topic_prefix + SET_GOAL_KEY_EXPR)
 
         ### Service
         ###### Publishers
         self.publisher_engage = self.session.declare_publisher(self.service_prefix + SET_ENGAGE_KEY_EXPR)
-
+        self.setAuto()
 
     def setGoal(self, lat, lon):
         coordinate = self.projector.forward(GPSPoint(float(lat), float(lon), 0))
@@ -129,6 +131,13 @@ class VehiclePose():
             ).serialize()
         )
 
+    def setAuto(self):
+        self.publisher_gate_mode.put(
+            GateMode(
+                data=GateMode.DATA["AUTO"].value
+            ).serialize()
+        )
+        
     def engage(self):
         self.publisher_engage.put(
             EngageRequest(
