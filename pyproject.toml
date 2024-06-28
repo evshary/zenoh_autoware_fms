@@ -9,7 +9,7 @@ packages = [{include = "zenoh_autoware_fms"}]
 [tool.poetry.dependencies]
 python = "^3.8"
 fastapi = "^0.95.1"
-eclipse-zenoh = "0.10.0rc0"
+eclipse-zenoh = "0.11.0-rc3"
 zenoh-ros-type = { git = "https://github.com/evshary/zenoh-ros-type-python.git", branch = "main" }
 #zenoh-ros-type = "^0.2.0"
 opencv-python = "^4.8.0.76"
@@ -21,6 +21,7 @@ pyyaml = "^6.0.1"
 uvicorn = {extras = ["standard"], version = "^0.24.0.post1"}
 asyncio = "^3.4.3"
 lanelet2 = "^1.2.1"
+numpy = "^1.24.1"
 
 [build-system]
 requires = ["poetry-core"]
