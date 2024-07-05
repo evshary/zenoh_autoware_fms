@@ -8,7 +8,7 @@ from werkzeug.serving import make_server
 IMAGE_RAW_KEY_EXPR='/sensing/camera/traffic_light/image_raw'
 
 class MJPEG_server():
-    def __init__(self, zenoh_session, scope, use_bridge_ros2dds=False):
+    def __init__(self, zenoh_session, scope, use_bridge_ros2dds=True):
         self.app = Flask(__name__)
         self.bridge = CvBridge()
         self.camera_image = None

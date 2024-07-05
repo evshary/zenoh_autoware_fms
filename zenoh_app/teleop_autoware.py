@@ -18,7 +18,7 @@ SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/local/control'
 SET_CONTROL_KEY_EXPR = '/external/selected/control_cmd'
 
 class ManualController():
-    def __init__(self, session, scope, use_bridge_ros2dds=False):
+    def __init__(self, session, scope, use_bridge_ros2dds=True):
         ### Information
         self.session = session
         self.scope = scope

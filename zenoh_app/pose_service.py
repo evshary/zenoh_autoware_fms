@@ -29,7 +29,7 @@ SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 
 
 class VehiclePose():
-    def __init__(self, session, scope, use_bridge_ros2dds=False):
+    def __init__(self, session, scope, use_bridge_ros2dds=True):
         ### Information
         self.use_bridge_ros2dds = use_bridge_ros2dds
         self.session = session
@@ -153,11 +153,11 @@ class PoseServer():
 
         self.vehicles = {}
         for _ in range(time):
-            replies = self.session.get('**/rt/api/vehicle/kinematics', zenoh.Queue())
-            for reply in replies:
+            replies = self.session.get('@ros2/**'+GET_POSE_KEY_EXPR, zenoh.Queue())
+            for reply in replies.receiver:
                 key_expr = str(reply.ok.key_expr)
-                if 'from_dds' in key_expr:
-                    end = key_expr.find('/rt/api/vehicle/kinematics')
+                if 'pub' in key_expr:
+                    end = key_expr.find('/api/vehicle/kinematics')
                     vehicle = key_expr[:end].split('/')[-1]
                     print(f'find vehicle {vehicle}')
                     self.vehicles[vehicle] = None

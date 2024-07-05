@@ -22,7 +22,7 @@ app.add_middleware(
 
 conf = zenoh.Config.from_file('config.json5')
 session = zenoh.open(conf)
-use_bridge_ros2dds = False
+use_bridge_ros2dds = True
 manual_controller = None
 mjpeg_server = None
 pose_service = PoseServer(session, use_bridge_ros2dds)
