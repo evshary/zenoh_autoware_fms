@@ -1,7 +1,7 @@
 import zenoh
 import json
 
-def list_autoware(session, use_bridge_ros2dds=False, search_times=10):
+def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
     ### uuid --> scope, address
     agent_infos = {}
 

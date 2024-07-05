@@ -19,7 +19,7 @@ def class2dict(instance, built_dict={}):
             new_subdic[key] = class2dict(value)
     return new_subdic
 
-def get_cpu_status(session, scope, use_bridge_ros2dds=False):
+def get_cpu_status(session, scope, use_bridge_ros2dds=True):
     prefix = scope if use_bridge_ros2dds else scope + '/rt'
     cpu_key_expr = prefix + GET_CPU_KEY_EXPR
     print(cpu_key_expr, flush=True)
@@ -38,7 +38,7 @@ def get_cpu_status(session, scope, use_bridge_ros2dds=False):
     print(cpu_status_data)
     return cpu_status_data
 
-def get_vehicle_status(session, scope, use_bridge_ros2dds=False):
+def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
     prefix = scope if use_bridge_ros2dds else scope + '/rt'
     vehicle_status_key_expr = prefix + GET_VEHICLE_STATUS_KEY_EXPR
     print(vehicle_status_key_expr, flush=True)
