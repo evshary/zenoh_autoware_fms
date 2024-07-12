@@ -1,7 +1,8 @@
-import zenoh
 import json
 import time
-from zenoh_ros_type.tier4_autoware_msgs import CpuUsage, CpuStatus, GearShift, TurnSignal, VehicleStatusStamped
+
+import zenoh
+from zenoh_ros_type.tier4_autoware_msgs import CpuStatus, CpuUsage, GearShift, TurnSignal, VehicleStatusStamped
 
 GET_CPU_KEY_EXPR = '/api/external/get/cpu_usage'
 GET_VEHICLE_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'

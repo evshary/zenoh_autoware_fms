@@ -1,12 +1,10 @@
-import zenoh
 import time
-from threading import Thread, Event
+from threading import Event, Thread
+
+import zenoh
+from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, AckermannLateralCommand, Engage, LongitudinalCommand
 from zenoh_ros_type.rcl_interfaces import Time
-from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, LongitudinalCommand, AckermannLateralCommand
-from zenoh_ros_type.autoware_auto_msgs import Engage
-from zenoh_ros_type.service import ServiceHeader
-from zenoh_ros_type.tier4_autoware_msgs import GateMode
-from zenoh_ros_type.tier4_autoware_msgs import GearShift, GearShiftStamped, VehicleStatusStamped
+from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
 
 GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
@@ -131,9 +129,9 @@ class ManualController():
         while not self.end_event.is_set():
             ### Considering gear with velocity
             if self.current_gear.upper() == 'REVERSE':
-                real_target_speed = self.target_velocity * (-1)
+                _real_target_speed = self.target_velocity * (-1)
             else:
-                real_target_speed = self.target_velocity
+                _real_target_speed = self.target_velocity
 
             ### Calculate acceleration
             acceleration = self.target_velocity - abs(self.current_velocity)

@@ -1,27 +1,23 @@
-import zenoh
-import time
-from zenoh_ros_type.rcl_interfaces import Time
-from zenoh_ros_type.common_interfaces.std_msgs import Header
-from zenoh_ros_type.common_interfaces import Point, Quaternion, Vector3
-from zenoh_ros_type.common_interfaces import Pose, PoseStamped, PoseWithCovariance, PoseWithCovarianceStamped
-from zenoh_ros_type.common_interfaces import Twist, TwistWithCovariance, TwistWithCovarianceStamped
-from zenoh_ros_type.common_interfaces import Accel, AccelWithCovariance, AccelWithCovarianceStamped
-from zenoh_ros_type.autoware_auto_msgs import Engage
-from zenoh_ros_type.tier4_autoware_msgs import GateMode
-from zenoh_ros_type.service import ServiceHeader
-from zenoh_ros_type.geographic_info import GeoPoint, GeoPointStamped
-from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
-
-from lanelet2.projection import UtmProjector
-from lanelet2.io import Origin
-from lanelet2.core import BasicPoint3d, GPSPoint
-
-import struct
-from .map_parser import OrientationParser
-
 import os
+import time
 
+import zenoh
+from lanelet2.core import BasicPoint3d, GPSPoint
+from lanelet2.io import Origin
+from lanelet2.projection import UtmProjector
+from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
+from zenoh_ros_type.autoware_auto_msgs import Engage
+from zenoh_ros_type.common_interfaces import (
+    Point,
+    Pose,
+    PoseStamped,
+    Quaternion,
+)
+from zenoh_ros_type.common_interfaces.std_msgs import Header
+from zenoh_ros_type.rcl_interfaces import Time
+from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
+from .map_parser import OrientationParser
 
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 GET_GOAL_POSE_KEY_EXPR = '/planning/mission_planning/echo_back_goal_pose'
