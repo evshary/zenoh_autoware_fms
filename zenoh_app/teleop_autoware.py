@@ -3,14 +3,14 @@ import time
 from threading import Thread, Event
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, LongitudinalCommand, AckermannLateralCommand
-from zenoh_ros_type.autoware_auto_msgs import EngageRequest
+from zenoh_ros_type.autoware_auto_msgs import Engage
 from zenoh_ros_type.service import ServiceHeader
 from zenoh_ros_type.tier4_autoware_msgs import GateMode
 from zenoh_ros_type.tier4_autoware_msgs import GearShift, GearShiftStamped, VehicleStatusStamped
 
 GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
-SET_ENGAGE_KEY_EXPR = '/api/autoware/set/engageRequest'
+SET_ENGAGE_KEY_EXPR = '/autoware/engage'
 # TODO: local should be replaced with remote, but this is workaround here
 SET_GEAR_KEY_EXPR = '/api/external/set/command/local/shift'
 SET_TURN_KEY_EXPR = '/api/external/set/command/local/turn_signal'
@@ -33,7 +33,6 @@ class ManualController():
         self.target_angle = 0
 
         self.topic_prefix = scope if use_bridge_ros2dds else scope + '/rt'
-        self.service_prefix = scope if use_bridge_ros2dds else scope + '/rq'
 
         def callback_status(sample):
             data = VehicleStatusStamped.deserialize(sample.payload)
@@ -55,7 +54,7 @@ class ManualController():
 
         ### Service
         ###### Publishers
-        self.publisher_engage = self.session.declare_publisher(self.service_prefix + SET_ENGAGE_KEY_EXPR)
+        self.publisher_engage = self.session.declare_publisher(self.topic_prefix + SET_ENGAGE_KEY_EXPR)
 
         ### Control command
         self.control_command = AckermannControlCommand(
@@ -90,12 +89,12 @@ class ManualController():
         )
 
         self.publisher_engage.put(
-            EngageRequest(
-                header=ServiceHeader(
-                    guid=0,
-                    seq=0
-                ),
-                mode=True
+            Engage(
+                stamp=Time(
+                    sec=0, 
+                    nanosec=0
+                    ), 
+                enable=True
             ).serialize()
         )
 
