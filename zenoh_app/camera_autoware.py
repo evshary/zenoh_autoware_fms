@@ -1,9 +1,9 @@
-from zenoh_ros_type.common_interfaces.sensor_msgs import Image
-import zenoh
-from flask import Flask, Response
-from cv_bridge import CvBridge
 import cv2
+import zenoh
+from cv_bridge import CvBridge
+from flask import Flask, Response
 from werkzeug.serving import make_server
+from zenoh_ros_type.common_interfaces.sensor_msgs import Image
 
 IMAGE_RAW_KEY_EXPR='/sensing/camera/traffic_light/image_raw'
 

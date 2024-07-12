@@ -1,5 +1,7 @@
-import zenoh
 import json
+
+import zenoh
+
 
 def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
     ### uuid --> scope, address
@@ -27,7 +29,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
                 if uuid not in agent_infos.keys():
                     agent_infos[uuid] = {}
                 agent_infos[uuid]['scope'] = scope
-            except:
+            except Exception as _e:
                 pass
 
         ### Retrive ip from admin space of zenoh-bridge-dds
@@ -42,7 +44,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
 
                 if uuid in agent_infos.keys():
                     agent_infos[uuid]['address'] = address
-            except:
+            except Exception as _e:
                 pass
     
     return list(agent_infos.values())
