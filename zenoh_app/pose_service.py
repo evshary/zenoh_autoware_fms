@@ -26,20 +26,15 @@ SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 
 
-class VehiclePose():
+class VehiclePose:
     def __init__(self, session, scope, use_bridge_ros2dds=True):
         ### Information
         self.use_bridge_ros2dds = use_bridge_ros2dds
         self.session = session
         self.scope = scope
-        self.originX=float(os.environ["REACT_APP_MAP_ORIGIN_LAT"])
-        self.originY=float(os.environ["REACT_APP_MAP_ORIGIN_LON"])
-        self.projector = UtmProjector(
-            Origin(
-                self.originX, 
-                self.originY
-            )
-        )
+        self.originX = float(os.environ['REACT_APP_MAP_ORIGIN_LAT'])
+        self.originY = float(os.environ['REACT_APP_MAP_ORIGIN_LON'])
+        self.projector = UtmProjector(Origin(self.originX, self.originY))
         self.initialize()
 
     def initialize(self):
@@ -60,7 +55,7 @@ class VehiclePose():
         self.goalValid = False
 
         def callback_position(sample):
-            print("Got message of kinematics of vehicle")
+            print('Got message of kinematics of vehicle')
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             # print(sample.payload)
             data = VehicleKinematics.deserialize(sample.payload)
@@ -72,7 +67,7 @@ class VehiclePose():
             self.lon = gps.lon
 
         def callback_goalPosition(sample):
-            print("Got message of kinematics of vehicle")
+            print('Got message of kinematics of vehicle')
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             # print(sample.payload)
             data = PoseStamped.deserialize(sample.payload)
@@ -97,54 +92,23 @@ class VehiclePose():
         ###### Publishers
         self.publisher_engage = self.session.declare_publisher(self.topic_prefix + SET_ENGAGE_KEY_EXPR)
 
-
     def setGoal(self, lat, lon):
         coordinate = self.projector.forward(GPSPoint(float(lat), float(lon), 0))
         q = self.orientationGen.genQuaternion_seg(coordinate.x, coordinate.y)
         self.publisher_goal.put(
             PoseStamped(
-                header=Header(
-                    stamp=Time(
-                        sec=0, 
-                        nanosec=0
-                    ), 
-                    frame_id='map'
-                ),
-                pose=Pose(
-                    position=Point(
-                        x=coordinate.x,
-                        y=coordinate.y,
-                        z=0
-                    ),
-                    orientation=Quaternion(
-                        x=q[0],
-                        y=q[1],
-                        z=q[2],
-                        w=q[3]
-                    )
-                )
+                header=Header(stamp=Time(sec=0, nanosec=0), frame_id='map'),
+                pose=Pose(position=Point(x=coordinate.x, y=coordinate.y, z=0), orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])),
             ).serialize()
         )
 
     def engage(self):
-        self.publisher_gate_mode.put(
-            GateMode(
-                data=GateMode.DATA["AUTO"].value
-            ).serialize()
-        )
-        
-        self.publisher_engage.put(
-            Engage(
-                stamp=Time(
-                    sec=0, 
-                    nanosec=0
-                    ), 
-                enable=True
-            ).serialize()
-        )
+        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize())
+
+        self.publisher_engage.put(Engage(stamp=Time(sec=0, nanosec=0), enable=True).serialize())
 
 
-class PoseServer():
+class PoseServer:
     def __init__(self, session, use_bridge_ros2dds=False):
         self.use_bridge_ros2dds = use_bridge_ros2dds
         self.session = session
@@ -156,7 +120,7 @@ class PoseServer():
 
         self.vehicles = {}
         for _ in range(time):
-            replies = self.session.get('@ros2/**'+GET_POSE_KEY_EXPR, zenoh.Queue())
+            replies = self.session.get('@ros2/**' + GET_POSE_KEY_EXPR, zenoh.Queue())
             for reply in replies.receiver:
                 key_expr = str(reply.ok.key_expr)
                 if 'pub' in key_expr:
@@ -169,30 +133,18 @@ class PoseServer():
     def constructVehicle(self):
         for scope in self.vehicles.keys():
             self.vehicles[scope] = VehiclePose(self.session, scope)
-    
+
     def returnPose(self):
         poseInfo = []
         for scope, vehicle in self.vehicles.items():
-            poseInfo.append(
-                {
-                    'name': scope,
-                    'lat': vehicle.lat,
-                    'lon': vehicle.lon
-                }
-            )
+            poseInfo.append({'name': scope, 'lat': vehicle.lat, 'lon': vehicle.lon})
         return poseInfo
-        
-    def returnGoalPose(self): ### TODO
+
+    def returnGoalPose(self):  ### TODO
         goalPoseInfo = []
         for scope, vehicle in self.vehicles.items():
             if vehicle.goalValid:
-                goalPoseInfo.append(
-                    {
-                        'name': scope,
-                        'lat': vehicle.goalLat,
-                        'lon': vehicle.goalLon
-                    }
-                )
+                goalPoseInfo.append({'name': scope, 'lat': vehicle.goalLat, 'lon': vehicle.goalLon})
         return goalPoseInfo
 
     def setGoal(self, scope, lat, lon):
@@ -202,14 +154,12 @@ class PoseServer():
     def engage(self, scope):
         if scope in self.vehicles.keys():
             self.vehicles[scope].engage()
-    
 
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     session = zenoh.open()
     mc = PoseServer(session, 'v1')
     import time
+
     while True:
         time.sleep(1)
-
