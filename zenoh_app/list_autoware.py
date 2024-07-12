@@ -16,7 +16,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
         for reply in replies.receiver:
             try:
                 key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.decode("utf-8"))
+                payload_ = json.loads(reply.ok.payload.decode('utf-8'))
 
                 if use_bridge_ros2dds:
                     uuid = key_expr_.split('/')[1].lower()
@@ -37,7 +37,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
         for reply in replies.receiver:
             try:
                 key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.decode("utf-8"))
+                payload_ = json.loads(reply.ok.payload.decode('utf-8'))
 
                 uuid = key_expr_.split('/')[5].lower()
                 address = payload_['dst']
@@ -46,5 +46,5 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
                     agent_infos[uuid]['address'] = address
             except Exception as _e:
                 pass
-    
+
     return list(agent_infos.values())

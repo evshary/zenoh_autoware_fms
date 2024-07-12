@@ -15,7 +15,8 @@ SET_TURN_KEY_EXPR = '/api/external/set/command/local/turn_signal'
 SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/local/control'
 SET_CONTROL_KEY_EXPR = '/external/selected/control_cmd'
 
-class ManualController():
+
+class ManualController:
     def __init__(self, session, scope, use_bridge_ros2dds=True):
         ### Information
         self.session = session
@@ -56,45 +57,15 @@ class ManualController():
 
         ### Control command
         self.control_command = AckermannControlCommand(
-            stamp=Time(
-                sec=0,
-                nanosec=0
-            ),
-            lateral=AckermannLateralCommand(
-                stamp=Time(
-                    sec=0,
-                    nanosec=0
-                ),
-                steering_tire_angle=0,
-                steering_tire_rotation_rate=0
-            ),
-            longitudinal=LongitudinalCommand(
-                stamp=Time(
-                    sec=0,
-                    nanosec=0
-                ),
-                speed=0,
-                acceleration=0,
-                jerk=0
-            )
+            stamp=Time(sec=0, nanosec=0),
+            lateral=AckermannLateralCommand(stamp=Time(sec=0, nanosec=0), steering_tire_angle=0, steering_tire_rotation_rate=0),
+            longitudinal=LongitudinalCommand(stamp=Time(sec=0, nanosec=0), speed=0, acceleration=0, jerk=0),
         )
 
         ### Startup external control
-        self.publisher_gate_mode.put(
-            GateMode(
-                data=GateMode.DATA["EXTERNAL"].value
-            ).serialize()
-        )
+        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize())
 
-        self.publisher_engage.put(
-            Engage(
-                stamp=Time(
-                    sec=0, 
-                    nanosec=0
-                    ), 
-                enable=True
-            ).serialize()
-        )
+        self.publisher_engage.put(Engage(stamp=Time(sec=0, nanosec=0), enable=True).serialize())
 
         ### Create new thread to send control command
         self.thread = Thread(target=self.pub_control)
@@ -107,17 +78,7 @@ class ManualController():
 
     def pub_gear(self, gear):
         gear_val = GearShift.DATA[gear.upper()].value
-        self.publisher_gear.put(
-            GearShiftStamped(
-                stamp=Time(
-                    sec=0,
-                    nanosec=0
-                ),
-                gear_shift=GearShift(
-                    data=gear_val
-                )
-            ).serialize()
-        )
+        self.publisher_gear.put(GearShiftStamped(stamp=Time(sec=0, nanosec=0), gear_shift=GearShift(data=gear_val)).serialize())
 
     def update_control_command(self, velocity, angle):
         if velocity is not None:
@@ -153,7 +114,7 @@ class ManualController():
             time.sleep(0.33)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     session = zenoh.open()
     mc = ManualController(session, 'v1')
 

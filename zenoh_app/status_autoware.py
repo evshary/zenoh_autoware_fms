@@ -7,9 +7,10 @@ from zenoh_ros_type.tier4_autoware_msgs import CpuStatus, CpuUsage, GearShift, T
 GET_CPU_KEY_EXPR = '/api/external/get/cpu_usage'
 GET_VEHICLE_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 
+
 def class2dict(instance, built_dict={}):
     ### Reference: https://stackoverflow.com/questions/63893843/how-to-convert-nested-object-to-nested-dictionary-in-python
-    if not hasattr(instance, "__dict__"):
+    if not hasattr(instance, '__dict__'):
         return instance
     new_subdic = vars(instance)
     for key, value in new_subdic.items():
@@ -19,6 +20,7 @@ def class2dict(instance, built_dict={}):
         else:
             new_subdic[key] = class2dict(value)
     return new_subdic
+
 
 def get_cpu_status(session, scope, use_bridge_ros2dds=True):
     prefix = scope if use_bridge_ros2dds else scope + '/rt'
@@ -39,6 +41,7 @@ def get_cpu_status(session, scope, use_bridge_ros2dds=True):
     print(cpu_status_data)
     return cpu_status_data
 
+
 def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
     prefix = scope if use_bridge_ros2dds else scope + '/rt'
     vehicle_status_key_expr = prefix + GET_VEHICLE_STATUS_KEY_EXPR
@@ -57,7 +60,8 @@ def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
     print(vehicle_status_data)
     return vehicle_status_data
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     conf = zenoh.Config()
     conf.insert_json5(zenoh.config.LISTEN_KEY, json.dumps(['tcp/172.17.0.1:7447']))
     s = zenoh.open(conf)
