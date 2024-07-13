@@ -37,3 +37,12 @@ Here is [the tutorial](https://autoware-carla-launch.readthedocs.io/en/latest/sc
 ## Project
 
 Please check our roadmap in [GitHub Project](https://github.com/users/evshary/projects/2)
+
+## For Developers
+
+You can use pre-commit and Ruff to have correct Python format
+
+```shell
+python3 -m pip install pre-commit ruff
+pre-commit install --install-hooks
+```
