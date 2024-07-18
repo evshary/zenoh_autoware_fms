@@ -12,7 +12,7 @@ poetry install
 # Install nodejs
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 source "$HOME/.nvm/nvm.sh"
-nvm install node
+nvm install 21.7.3
 # Install npm
 pushd frontend
 npm install
