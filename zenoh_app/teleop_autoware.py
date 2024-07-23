@@ -2,18 +2,19 @@ import time
 from threading import Event, Thread
 
 import zenoh
-from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, AckermannLateralCommand, Engage, LongitudinalCommand
+from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, AckermannLateralCommand, LongitudinalCommand
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
 
+from zenoh_app.parse_payload import ChangeOperationMode_payload
+
 GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
-SET_ENGAGE_KEY_EXPR = '/autoware/engage'
-# TODO: local should be replaced with remote, but this is workaround here
-SET_GEAR_KEY_EXPR = '/api/external/set/command/local/shift'
-SET_TURN_KEY_EXPR = '/api/external/set/command/local/turn_signal'
-SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/local/control'
+SET_REMOTE_MODE_KEY_EXPR = '/api/operation_mode/change_to_remote'
+SET_GEAR_KEY_EXPR = '/api/external/set/command/remote/shift'
 SET_CONTROL_KEY_EXPR = '/external/selected/control_cmd'
+# SET_TURN_KEY_EXPR = '/api/external/set/command/remote/turn_signal'
+# SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/remote/control'
 
 
 class ManualController:
@@ -47,13 +48,9 @@ class ManualController:
         ###### Publishers
         self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
         self.publisher_gear = self.session.declare_publisher(self.topic_prefix + SET_GEAR_KEY_EXPR)
-        self.publisher_turn = self.session.declare_publisher(self.topic_prefix + SET_TURN_KEY_EXPR)
         self.publisher_control = self.session.declare_publisher(self.topic_prefix + SET_CONTROL_KEY_EXPR)
-        self.publisher_pedal = self.session.declare_publisher(self.topic_prefix + SET_PEDAL_CONTROL_KEY_EXPR)
-
-        ### Service
-        ###### Publishers
-        self.publisher_engage = self.session.declare_publisher(self.topic_prefix + SET_ENGAGE_KEY_EXPR)
+        # self.publisher_turn = self.session.declare_publisher(self.topic_prefix + SET_TURN_KEY_EXPR)
+        # self.publisher_pedal = self.session.declare_publisher(self.topic_prefix + SET_PEDAL_CONTROL_KEY_EXPR)
 
         ### Control command
         self.control_command = AckermannControlCommand(
@@ -64,8 +61,16 @@ class ManualController:
 
         ### Startup external control
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize())
+        time.sleep(1)
 
-        self.publisher_engage.put(Engage(stamp=Time(sec=0, nanosec=0), enable=True).serialize())
+        replies = self.session.get(self.topic_prefix + SET_REMOTE_MODE_KEY_EXPR, zenoh.Queue())
+        for reply in replies.receiver:
+            try:
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode_payload(reply.ok.payload)))
+            except:
+                print(">> Received (ERROR: '{}')".format(reply.err.payload))
+                raise
+
 
         ### Create new thread to send control command
         self.thread = Thread(target=self.pub_control)

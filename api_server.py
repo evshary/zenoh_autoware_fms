@@ -1,5 +1,6 @@
 import asyncio
 import math
+import time
 
 import cv2
 import zenoh
@@ -66,6 +67,7 @@ async def manage_teleop_startup(scope):
     if manual_controller is not None:
         manual_controller.stop_teleop()
     manual_controller = ManualController(session, scope, use_bridge_ros2dds)
+    time.sleep(1)
 
     if mjpeg_server is not None:
         mjpeg_server.change_scope(scope)
