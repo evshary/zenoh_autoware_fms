@@ -5,8 +5,7 @@ import zenoh
 from lanelet2.core import BasicPoint3d, GPSPoint
 from lanelet2.io import Origin
 from lanelet2.projection import UtmProjector
-from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
-from zenoh_ros_type.autoware_auto_msgs import Engage
+from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode, ResponseStatus, VehicleKinematics
 from zenoh_ros_type.common_interfaces import (
     Point,
     Pose,
@@ -17,13 +16,15 @@ from zenoh_ros_type.common_interfaces.std_msgs import Header
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
+from zenoh_app.parse_payload import ChangeOperationMode_payload
+
 from .map_parser import OrientationParser
 
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 GET_GOAL_POSE_KEY_EXPR = '/planning/mission_planning/echo_back_goal_pose'
-SET_ENGAGE_KEY_EXPR = '/autoware/engage'
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
+SET_AUTO_MODE_KEY_EXPR = '/api/operation_mode/change_to_autonomous'
 
 
 class VehiclePose:
@@ -88,10 +89,6 @@ class VehiclePose:
         self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
         self.publisher_goal = self.session.declare_publisher(self.topic_prefix + SET_GOAL_KEY_EXPR)
 
-        ### Service
-        ###### Publishers
-        self.publisher_engage = self.session.declare_publisher(self.topic_prefix + SET_ENGAGE_KEY_EXPR)
-
     def setGoal(self, lat, lon):
         coordinate = self.projector.forward(GPSPoint(float(lat), float(lon), 0))
         q = self.orientationGen.genQuaternion_seg(coordinate.x, coordinate.y)
@@ -104,8 +101,15 @@ class VehiclePose:
 
     def engage(self):
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize())
+        time.sleep(1)
 
-        self.publisher_engage.put(Engage(stamp=Time(sec=0, nanosec=0), enable=True).serialize())
+        replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR, zenoh.Queue())
+        for reply in replies.receiver:
+            try:
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode_payload(reply.ok.payload)))
+            except:
+                print(">> Received (ERROR: '{}')".format(reply.err.payload))
+                raise
 
 
 class PoseServer:
@@ -124,7 +128,7 @@ class PoseServer:
             for reply in replies.receiver:
                 key_expr = str(reply.ok.key_expr)
                 if 'pub' in key_expr:
-                    end = key_expr.find('/api/vehicle/kinematics')
+                    end = key_expr.find(GET_POSE_KEY_EXPR)
                     vehicle = key_expr[:end].split('/')[-1]
                     print(f'find vehicle {vehicle}')
                     self.vehicles[vehicle] = None

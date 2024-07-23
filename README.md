@@ -48,16 +48,24 @@ pre-commit install --install-hooks
 ```
 ## Autoware API
 
-| Category | Topic                                 | Type                                                                 | Description                                      |
+### Topic
+
+| Category | Name                                 | Type                                                                 | Description                                      |
 |:-------- |:------------------------------------- |:-------------------------------------------------------------------- |:------------------------------------------------ |
 | Pose     | /api/vehicle/kinematics               | autoware_adapi_v1_msgs/msg/VehicleKinematics                         | Get vehicle kinematics                           |
-| Pose     | /autoware/engage                      | autoware_auto_vehicle_msgs/msg/Engage                                | Engage the vehicle with FMS                      |
-| Pose     | /control/gate_mode_cmd                | tier4_control_msgs/msg/GateMode                                      | Set the gate mode to AUTO                        |
+| Pose     | /planning/mission_planning/echo_back_goal_pose| geometry_msgs/msg/PoseStamped                                      | Echo back the goal position and orientation                         |
 | Pose     | /planning/mission_planning/goal       | geometry_msgs/msg/PoseStamped                                        | Set the goal position and orientation            |
+| Pose     | /control/gate_mode_cmd                | tier4_control_msgs/msg/GateMode                                      | Set the gate mode to AUTO                        |
 | Status   | /api/external/get/cpu_usage           | tier4_autoware_msgs/tier4_external_api_msgs/msg/CpuUsage             | Get the current CPU usage statistics             |
 | Status   | /api/external/get/vehicle/status      | tier4_autoware_msgs/tier4_external_api_msgs/msg/VehicleStatusStamped | Get gear shift and turn signal of vehicle        |
 | Teleop   | /api/external/get/vehicle/status      | tier4_autoware_msgs/tier4_external_api_msgs/msg/VehicleStatusStamped | Get gear shift and turn signal of vehicle        |
 | Teleop   | /control/gate_mode_cmd                | tier4_control_msgs/msg/GateMode                                      | Set the gate mode to External                    |
-| Teleop   | /autoware/engage                      | autoware_auto_vehicle_msgs/msg/Engage                                | Engage the vehicle with FMS                      |
-| Teleop   | /api/external/set/command/local/shift | tier4_autoware_msgs/tier4_external_api_msgs/msg/GearShiftStamped     | Set gear shift from FMS                          |
+| Teleop   | /api/external/set/command/remote/shift | tier4_autoware_msgs/tier4_external_api_msgs/msg/GearShiftStamped     | Set gear shift from FMS                          |
 | Teleop   | /external/selected/control_cmd        | autoware_auto_control_msgs/AckermannControlCommand                   | Set longitudinal speed and acceleration From FMS |
+
+### Service
+
+| Category | Name                                     | Type                                         | Description                             |
+|:-------- |:---------------------------------------- |:-------------------------------------------- |:--------------------------------------- |
+| Pose     | /api/operation_mode/change_to_autonomous | autoware_adapi_v1_msgs/srv/ChangeOperionMode | Change the operation mode to autonomous |
+| Teleop   | /api/operation_mode/change_to_remote     | autoware_adapi_v1_msgs/srv/ChangeOperionMode | Change the operation mode to remote     |
