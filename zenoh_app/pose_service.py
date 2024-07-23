@@ -5,7 +5,7 @@ import zenoh
 from lanelet2.core import BasicPoint3d, GPSPoint
 from lanelet2.io import Origin
 from lanelet2.projection import UtmProjector
-from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode, ResponseStatus, VehicleKinematics
+from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
 from zenoh_ros_type.common_interfaces import (
     Point,
     Pose,
