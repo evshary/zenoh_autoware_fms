@@ -1,11 +1,10 @@
 import os
-import time
 
 import zenoh
 from lanelet2.core import BasicPoint3d, GPSPoint
 from lanelet2.io import Origin
 from lanelet2.projection import UtmProjector
-from zenoh_ros_type.autoware_adapi_msgs import VehicleKinematics
+from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode, VehicleKinematics
 from zenoh_ros_type.common_interfaces import (
     Point,
     Pose,
@@ -15,8 +14,6 @@ from zenoh_ros_type.common_interfaces import (
 from zenoh_ros_type.common_interfaces.std_msgs import Header
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode
-
-from zenoh_app.parse_payload import ChangeOperationMode_payload
 
 from .map_parser import OrientationParser
 
@@ -101,12 +98,11 @@ class VehiclePose:
 
     def engage(self):
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize())
-        time.sleep(1)
 
         replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR, zenoh.Queue())
         for reply in replies.receiver:
             try:
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode_payload(reply.ok.payload)))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload)))
             except:
                 print(">> Received (ERROR: '{}')".format(reply.err.payload))
                 raise

@@ -2,11 +2,10 @@ import time
 from threading import Event, Thread
 
 import zenoh
+from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode
 from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, AckermannLateralCommand, LongitudinalCommand
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
-
-from zenoh_app.parse_payload import ChangeOperationMode_payload
 
 GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
@@ -61,12 +60,11 @@ class ManualController:
 
         ### Startup external control
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize())
-        time.sleep(1)
 
         replies = self.session.get(self.topic_prefix + SET_REMOTE_MODE_KEY_EXPR, zenoh.Queue())
         for reply in replies.receiver:
             try:
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode_payload(reply.ok.payload)))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload)))
             except:
                 print(">> Received (ERROR: '{}')".format(reply.err.payload))
                 raise
