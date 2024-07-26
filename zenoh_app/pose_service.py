@@ -1,4 +1,5 @@
 import os
+import time
 
 import zenoh
 from lanelet2.core import BasicPoint3d, GPSPoint
@@ -99,6 +100,9 @@ class VehiclePose:
     def engage(self):
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize())
 
+        # Ensure Autoware receives the gate mode change before the operation mode change
+        time.sleep(1)
+
         replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR, zenoh.Queue())
         for reply in replies.receiver:
             try:
@@ -159,7 +163,6 @@ class PoseServer:
 if __name__ == '__main__':
     session = zenoh.open()
     mc = PoseServer(session, 'v1')
-    import time
-
+    
     while True:
         time.sleep(1)
