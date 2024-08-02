@@ -53,7 +53,7 @@ pre-commit install --install-hooks
 | Category | Name                                 | Type                                                                 | Description                                      |
 |:-------- |:------------------------------------- |:-------------------------------------------------------------------- |:------------------------------------------------ |
 | Pose     | /api/vehicle/kinematics               | autoware_adapi_v1_msgs/msg/VehicleKinematics                         | Get vehicle kinematics                           |
-| Pose     | /planning/mission_planning/echo_back_goal_pose| geometry_msgs/msg/PoseStamped                                      | Echo back the goal position and orientation                         |
+| Pose     | /api/routing/route | autoware_adapi_v1_msgs/msg/Route                                      | Get the route and the goal position                        |
 | Pose     | /planning/mission_planning/goal       | geometry_msgs/msg/PoseStamped                                        | Set the goal position and orientation            |
 | Pose     | /control/gate_mode_cmd                | tier4_control_msgs/msg/GateMode                                      | Set the gate mode to AUTO                        |
 | Status   | /api/external/get/cpu_usage           | tier4_autoware_msgs/tier4_external_api_msgs/msg/CpuUsage             | Get the current CPU usage statistics             |

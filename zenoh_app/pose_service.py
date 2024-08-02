@@ -5,7 +5,7 @@ import zenoh
 from lanelet2.core import BasicPoint3d, GPSPoint
 from lanelet2.io import Origin
 from lanelet2.projection import UtmProjector
-from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode, VehicleKinematics
+from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode, Route, VehicleKinematics
 from zenoh_ros_type.common_interfaces import (
     Point,
     Pose,
@@ -19,7 +19,7 @@ from zenoh_ros_type.tier4_autoware_msgs import GateMode
 from .map_parser import OrientationParser
 
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
-GET_GOAL_POSE_KEY_EXPR = '/planning/mission_planning/echo_back_goal_pose'
+GET_GOAL_POSE_KEY_EXPR = '/api/routing/route'
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 SET_AUTO_MODE_KEY_EXPR = '/api/operation_mode/change_to_autonomous'
@@ -66,17 +66,19 @@ class VehiclePose:
             self.lon = gps.lon
 
         def callback_goalPosition(sample):
-            print('Got message of kinematics of vehicle')
+            print('Got message of route of vehicle')
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             # print(sample.payload)
-            data = PoseStamped.deserialize(sample.payload)
+            data = Route.deserialize(sample.payload)
             # print(data)
-            self.goalX = data.pose.position.x
-            self.goalY = data.pose.position.y
-            gps = self.projector.reverse(BasicPoint3d(self.goalX, self.goalY, 0.0))
-            self.goalLat = gps.lat
-            self.goalLon = gps.lon
-            self.goalValid = True
+            if len(data.data) == 1: 
+                self.goalX = data.data[0].goal.position.x
+                self.goalY = data.data[0].goal.position.y
+                gps = self.projector.reverse(BasicPoint3d(self.goalX, self.goalY, 0.0))
+                self.goalLat = gps.lat
+                self.goalLon = gps.lon
+                print("Echo back goal pose: ", self.goalLat, self.goalLon)
+                self.goalValid = True
 
         ### Topics
         ###### Subscribers
