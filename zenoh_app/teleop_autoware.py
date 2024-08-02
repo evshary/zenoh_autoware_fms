@@ -60,7 +60,10 @@ class ManualController:
 
         ### Startup external control
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize())
-
+        
+        # Ensure Autoware receives the gate mode change before the operation mode change
+        time.sleep(1)
+        
         replies = self.session.get(self.topic_prefix + SET_REMOTE_MODE_KEY_EXPR, zenoh.Queue())
         for reply in replies.receiver:
             try:
