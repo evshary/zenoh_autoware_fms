@@ -31,7 +31,6 @@ function Lists() {
     const {list} = useSelector(state => state.list)
     const dispatch = useDispatch()
     useEffect(() => {
-        // TODO: We can show loading on webpage
         dispatch(getListContent())
     }, [dispatch])
 

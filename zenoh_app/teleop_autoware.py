@@ -8,12 +8,12 @@ from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
 
 GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
-SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 SET_REMOTE_MODE_KEY_EXPR = '/api/operation_mode/change_to_remote'
 SET_GEAR_KEY_EXPR = '/api/external/set/command/remote/shift'
+
+### TODO: Should be replaced by ADAPI
+SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 SET_CONTROL_KEY_EXPR = '/external/selected/control_cmd'
-# SET_TURN_KEY_EXPR = '/api/external/set/command/remote/turn_signal'
-# SET_PEDAL_CONTROL_KEY_EXPR = '/api/external/set/command/remote/control'
 
 
 class ManualController:
@@ -48,8 +48,6 @@ class ManualController:
         self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
         self.publisher_gear = self.session.declare_publisher(self.topic_prefix + SET_GEAR_KEY_EXPR)
         self.publisher_control = self.session.declare_publisher(self.topic_prefix + SET_CONTROL_KEY_EXPR)
-        # self.publisher_turn = self.session.declare_publisher(self.topic_prefix + SET_TURN_KEY_EXPR)
-        # self.publisher_pedal = self.session.declare_publisher(self.topic_prefix + SET_PEDAL_CONTROL_KEY_EXPR)
 
         ### Control command
         self.control_command = AckermannControlCommand(

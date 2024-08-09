@@ -20,9 +20,11 @@ from .map_parser import OrientationParser
 
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 GET_GOAL_POSE_KEY_EXPR = '/api/routing/route'
+SET_AUTO_MODE_KEY_EXPR = '/api/operation_mode/change_to_autonomous'
+
+### TODO: Should be replaced by ADAPI
 SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
-SET_AUTO_MODE_KEY_EXPR = '/api/operation_mode/change_to_autonomous'
 
 
 class VehiclePose:
@@ -146,7 +148,7 @@ class PoseServer:
             poseInfo.append({'name': scope, 'lat': vehicle.lat, 'lon': vehicle.lon})
         return poseInfo
 
-    def returnGoalPose(self):  ### TODO
+    def returnGoalPose(self):
         goalPoseInfo = []
         for scope, vehicle in self.vehicles.items():
             if vehicle.goalValid:
