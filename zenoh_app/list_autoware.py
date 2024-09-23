@@ -10,13 +10,13 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
     ### Retrive scope from admin space of zenoh-bridge-dds
     for _ in range(search_times):
         if use_bridge_ros2dds:
-            replies = session.get('@ros2/**/config', zenoh.Queue())
+            replies = session.get('@/**/ros2/config')
         else:
             replies = session.get('@/service/**/config', zenoh.Queue())
-        for reply in replies.receiver:
+        for reply in replies:
             try:
                 key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.decode('utf-8'))
+                payload_ = json.loads(reply.ok.payload.deserialize(str))
 
                 if use_bridge_ros2dds:
                     uuid = key_expr_.split('/')[1].lower()
@@ -33,11 +33,11 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
                 pass
 
         ### Retrive ip from admin space of zenoh-bridge-dds
-        replies = session.get('@/session/**/link/**', zenoh.Queue())
-        for reply in replies.receiver:
+        replies = session.get('@/**/session/**/link/**')
+        for reply in replies:
             try:
                 key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.decode('utf-8'))
+                payload_ = json.loads(reply.ok.payload.deserialize(str))
 
                 uuid = key_expr_.split('/')[5].lower()
                 address = payload_['dst']
