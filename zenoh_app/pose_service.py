@@ -59,7 +59,7 @@ class VehiclePose:
             print('Got message of kinematics of vehicle')
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             # print(sample.payload)
-            data = VehicleKinematics.deserialize(sample.payload)
+            data = VehicleKinematics.deserialize(sample.payload.deserialize(bytes))
             # print(data)
             self.positionX = data.pose.pose.pose.position.x
             self.positionY = data.pose.pose.pose.position.y
@@ -69,10 +69,7 @@ class VehiclePose:
 
         def callback_goalPosition(sample):
             print('Got message of route of vehicle')
-            # print("size of the message (bytes) ", struct.calcsize(sample.payload))
-            # print(sample.payload)
-            data = Route.deserialize(sample.payload)
-            # print(data)
+            data = Route.deserialize(sample.payload.deserialize(bytes))
             if len(data.data) == 1: 
                 self.goalX = data.data[0].goal.position.x
                 self.goalY = data.data[0].goal.position.y
@@ -107,12 +104,18 @@ class VehiclePose:
         # Ensure Autoware receives the gate mode change before the operation mode change
         time.sleep(1)
 
-        replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR, zenoh.Queue())
-        for reply in replies.receiver:
+        replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR)
+        for reply in replies:
+            # TODO: Handle service payload deserialize error
+            print(f"Received data (bytes): {reply.ok.payload.deserialize(bytes)}")
+            payload = reply.ok.payload.deserialize(bytes)[-4:]+reply.ok.payload.deserialize(bytes)[:-4]
+            print(f"Modified payload (bytes): {payload}")
+
             try:
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload)))
+                # print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload.deserialize(bytes))))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(payload)))
             except:
-                print(">> Received (ERROR: '{}')".format(reply.err.payload))
+                print(">> Received (ERROR: '{}')".format(reply.err.payload.deserialize(bytes)))
                 raise
 
 
@@ -128,8 +131,8 @@ class PoseServer:
 
         self.vehicles = {}
         for _ in range(time):
-            replies = self.session.get('@ros2/**' + GET_POSE_KEY_EXPR, zenoh.Queue())
-            for reply in replies.receiver:
+            replies = self.session.get('@/**/ros2/**' + GET_POSE_KEY_EXPR)
+            for reply in replies:
                 key_expr = str(reply.ok.key_expr)
                 if 'pub' in key_expr:
                     end = key_expr.find(GET_POSE_KEY_EXPR)
