@@ -3,7 +3,7 @@ from threading import Event, Thread
 
 import zenoh
 from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode
-from zenoh_ros_type.autoware_auto_msgs import AckermannControlCommand, AckermannLateralCommand, LongitudinalCommand
+from zenoh_ros_type.autoware_msgs import Control, Lateral, Longitudinal
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
 
@@ -50,10 +50,23 @@ class ManualController:
         self.publisher_control = self.session.declare_publisher(self.topic_prefix + SET_CONTROL_KEY_EXPR)
 
         ### Control command
-        self.control_command = AckermannControlCommand(
+        self.control_command = Control(
             stamp=Time(sec=0, nanosec=0),
-            lateral=AckermannLateralCommand(stamp=Time(sec=0, nanosec=0), steering_tire_angle=0, steering_tire_rotation_rate=0),
-            longitudinal=LongitudinalCommand(stamp=Time(sec=0, nanosec=0), speed=0, acceleration=0, jerk=0),
+            control_time=Time(sec=0, nanosec=0),
+            lateral=Lateral(
+                stamp=Time(sec=0, nanosec=0),
+                control_time=Time(sec=0, nanosec=0),
+                steering_tire_angle=0, 
+                steering_tire_rotation_rate=0,
+                is_defined_steering_tire_rotation_rate=False),
+            longitudinal=Longitudinal(
+                stamp=Time(sec=0, nanosec=0),
+                control_time=Time(sec=0, nanosec=0),
+                velocity=0, 
+                acceleration=0, 
+                jerk=0,
+                is_defined_acceleration=False,
+                is_defined_jerk=False),
         )
 
         ### Startup external control
@@ -115,7 +128,7 @@ class ManualController:
             self.control_command.lateral.steering_tire_angle = self.target_angle
 
             ### Pub control
-            self.control_command.longitudinal.speed = self.target_velocity
+            self.control_command.longitudinal.velocity = self.target_velocity
             self.control_command.longitudinal.acceleration = acceleration
             self.control_command.stamp.nanosec += 1
             self.publisher_control.put(self.control_command.serialize())
