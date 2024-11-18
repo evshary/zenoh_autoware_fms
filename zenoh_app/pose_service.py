@@ -5,11 +5,18 @@ import zenoh
 from lanelet2.core import BasicPoint3d, GPSPoint
 from lanelet2.io import Origin
 from lanelet2.projection import UtmProjector
-from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode, Route, VehicleKinematics
+from zenoh_ros_type.autoware_adapi_msgs import (
+    ChangeOperationModeResponse,
+    ClearRouteResponse,
+    Route,
+    RouteOption,
+    SetRoutePointsRequest,
+    SetRoutePointsResponse,
+    VehicleKinematics,
+)
 from zenoh_ros_type.common_interfaces import (
     Point,
     Pose,
-    PoseStamped,
     Quaternion,
 )
 from zenoh_ros_type.common_interfaces.std_msgs import Header
@@ -21,9 +28,10 @@ from .map_parser import OrientationParser
 GET_POSE_KEY_EXPR = '/api/vehicle/kinematics'
 GET_GOAL_POSE_KEY_EXPR = '/api/routing/route'
 SET_AUTO_MODE_KEY_EXPR = '/api/operation_mode/change_to_autonomous'
+SET_ROUTE_POINT_KEY_EXPR = '/api/routing/set_route_points'
+SET_CLEAR_ROUTE_KEY_EXPR = '/api/routing/clear_route'
 
 ### TODO: Should be replaced by ADAPI
-SET_GOAL_KEY_EXPR = '/planning/mission_planning/goal'
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 
 
@@ -70,13 +78,13 @@ class VehiclePose:
         def callback_goalPosition(sample):
             print('Got message of route of vehicle')
             data = Route.deserialize(sample.payload.deserialize(bytes))
-            if len(data.data) == 1: 
+            if len(data.data) == 1:
                 self.goalX = data.data[0].goal.position.x
                 self.goalY = data.data[0].goal.position.y
                 gps = self.projector.reverse(BasicPoint3d(self.goalX, self.goalY, 0.0))
                 self.goalLat = gps.lat
                 self.goalLon = gps.lon
-                print("Echo back goal pose: ", self.goalLat, self.goalLon)
+                print('Echo back goal pose: ', self.goalLat, self.goalLon)
                 self.goalValid = True
 
         ### Topics
@@ -86,17 +94,39 @@ class VehiclePose:
 
         ###### Publishers
         self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
-        self.publisher_goal = self.session.declare_publisher(self.topic_prefix + SET_GOAL_KEY_EXPR)
 
     def setGoal(self, lat, lon):
+        replies = self.session.get(self.topic_prefix + SET_CLEAR_ROUTE_KEY_EXPR)
+
+        for reply in replies:
+            # TODO: Handle service payload deserialize error
+            print(f'Received data (bytes): {reply.ok.payload.deserialize(bytes)}')
+            payload = reply.ok.payload.deserialize(bytes)[-4:] + reply.ok.payload.deserialize(bytes)[:-4]
+            print(f'Modified payload (bytes): {payload}')
+            try:
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ClearRouteResponse.deserialize(payload)))
+            except Exception as e:
+                print(f'Failed to handle response: {e}')
+
         coordinate = self.projector.forward(GPSPoint(float(lat), float(lon), 0))
         q = self.orientationGen.genQuaternion_seg(coordinate.x, coordinate.y)
-        self.publisher_goal.put(
-            PoseStamped(
-                header=Header(stamp=Time(sec=0, nanosec=0), frame_id='map'),
-                pose=Pose(position=Point(x=coordinate.x, y=coordinate.y, z=0), orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])),
-            ).serialize()
-        )
+        request = SetRoutePointsRequest(
+            header=Header(stamp=Time(sec=0, nanosec=0), frame_id='map'),
+            option=RouteOption(allow_goal_modification=False),
+            goal=Pose(position=Point(x=coordinate.x, y=coordinate.y, z=0), orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])),
+            waypoints=[],
+        ).serialize()
+
+        replies = self.session.get(self.topic_prefix + SET_ROUTE_POINT_KEY_EXPR, payload=request)
+        for reply in replies:
+            # TODO: Handle service payload deserialize error
+            print(f'Received data (bytes): {reply.ok.payload.deserialize(bytes)}')
+            payload = reply.ok.payload.deserialize(bytes)[-4:] + reply.ok.payload.deserialize(bytes)[:-4]
+            print(f'Modified payload (bytes): {payload}')
+            try:
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, SetRoutePointsResponse.deserialize(payload)))
+            except Exception as e:
+                print(f'Failed to handle response: {e}')
 
     def engage(self):
         self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize())
@@ -106,17 +136,16 @@ class VehiclePose:
 
         replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR)
         for reply in replies:
-            # TODO: Handle service payload deserialize error
-            print(f"Received data (bytes): {reply.ok.payload.deserialize(bytes)}")
-            payload = reply.ok.payload.deserialize(bytes)[-4:]+reply.ok.payload.deserialize(bytes)[:-4]
-            print(f"Modified payload (bytes): {payload}")
-
             try:
-                # print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload.deserialize(bytes))))
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(payload)))
-            except:
-                print(">> Received (ERROR: '{}')".format(reply.err.payload.deserialize(bytes)))
-                raise
+                # TODO: Handle service payload deserialize error
+                print(f'Received data (bytes): {reply.ok.payload.deserialize(bytes)}')
+                payload = reply.ok.payload.deserialize(bytes)[-4:] + reply.ok.payload.deserialize(bytes)[:-4]
+                print(f'Modified payload (bytes): {payload}')
+
+                # print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode_Response.deserialize(reply.ok.payload.deserialize(bytes))))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(payload)))
+            except Exception as e:
+                print(f'Failed to handle response: {e}')
 
 
 class PoseServer:
@@ -170,6 +199,6 @@ class PoseServer:
 if __name__ == '__main__':
     session = zenoh.open()
     mc = PoseServer(session, 'v1')
-    
+
     while True:
         time.sleep(1)

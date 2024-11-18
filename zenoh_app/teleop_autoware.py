@@ -2,7 +2,7 @@ import time
 from threading import Event, Thread
 
 import zenoh
-from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationMode
+from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationModeResponse
 from zenoh_ros_type.autoware_msgs import Control, Lateral, Longitudinal
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
@@ -84,7 +84,7 @@ class ManualController:
 
             try:
                 # print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload.deserialize(bytes))))
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(payload)))            
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(payload)))            
             except:
                 print(">> Received (ERROR: '{}')".format(reply.err.payload.deserialize(bytes)))
                 raise
