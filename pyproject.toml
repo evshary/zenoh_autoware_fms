@@ -9,7 +9,7 @@ packages = [{include = "zenoh_autoware_fms"}]
 [tool.poetry.dependencies]
 python = "^3.8"
 fastapi = "^0.95.1"
-eclipse-zenoh = "1.0.0-alpha.6"
+eclipse-zenoh = "1.0.2"
 zenoh-ros-type = { git = "https://github.com/evshary/zenoh-ros-type-python.git", branch = "main" }
 #zenoh-ros-type = "^0.2.0"
 opencv-python = "^4.8.0.76"
