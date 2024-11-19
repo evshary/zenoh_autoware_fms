@@ -16,7 +16,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
         for reply in replies:
             try:
                 key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.deserialize(str))
+                payload_ = json.loads(reply.ok.payload.to_string())
 
                 if use_bridge_ros2dds:
                     uuid = key_expr_.split('/')[1].lower()
@@ -37,7 +37,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
         for reply in replies:
             try:
                 key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.deserialize(str))
+                payload_ = json.loads(reply.ok.payload.to_string())
 
                 uuid = key_expr_.split('/')[5].lower()
                 address = payload_['dst']

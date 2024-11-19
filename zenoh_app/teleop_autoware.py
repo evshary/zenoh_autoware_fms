@@ -34,7 +34,7 @@ class ManualController:
         self.topic_prefix = scope if use_bridge_ros2dds else scope + '/rt'
 
         def callback_status(sample):
-            data = VehicleStatusStamped.deserialize(sample.payload.deserialize(bytes))
+            data = VehicleStatusStamped.deserialize(sample.payload.to_bytes())
             self.current_velocity = data.status.twist.linear.x
             gear_val = data.status.gear_shift.data
             self.current_gear = GearShift.DATA(gear_val).name
@@ -77,17 +77,10 @@ class ManualController:
         
         replies = self.session.get(self.topic_prefix + SET_REMOTE_MODE_KEY_EXPR)
         for reply in replies:
-            # TODO: Handle service payload deserialize error
-            print(f"Received data (bytes): {reply.ok.payload.deserialize(bytes)}")
-            payload = reply.ok.payload.deserialize(bytes)[-4:]+reply.ok.payload.deserialize(bytes)[:-4]
-            print(f"Modified payload (bytes): {payload}")
-
             try:
-                # print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode.deserialize(reply.ok.payload.deserialize(bytes))))
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(payload)))            
-            except:
-                print(">> Received (ERROR: '{}')".format(reply.err.payload.deserialize(bytes)))
-                raise
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(reply.ok.payload.to_bytes())))
+            except Exception as e:
+                print(f'Failed to handle response: {e}')
 
 
         ### Create new thread to send control command

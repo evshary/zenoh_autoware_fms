@@ -67,7 +67,7 @@ class VehiclePose:
             print('Got message of kinematics of vehicle')
             # print("size of the message (bytes) ", struct.calcsize(sample.payload))
             # print(sample.payload)
-            data = VehicleKinematics.deserialize(sample.payload.deserialize(bytes))
+            data = VehicleKinematics.deserialize(sample.payload.to_bytes())
             # print(data)
             self.positionX = data.pose.pose.pose.position.x
             self.positionY = data.pose.pose.pose.position.y
@@ -77,7 +77,7 @@ class VehiclePose:
 
         def callback_goalPosition(sample):
             print('Got message of route of vehicle')
-            data = Route.deserialize(sample.payload.deserialize(bytes))
+            data = Route.deserialize(sample.payload.to_bytes())
             if len(data.data) == 1:
                 self.goalX = data.data[0].goal.position.x
                 self.goalY = data.data[0].goal.position.y
@@ -99,12 +99,8 @@ class VehiclePose:
         replies = self.session.get(self.topic_prefix + SET_CLEAR_ROUTE_KEY_EXPR)
 
         for reply in replies:
-            # TODO: Handle service payload deserialize error
-            print(f'Received data (bytes): {reply.ok.payload.deserialize(bytes)}')
-            payload = reply.ok.payload.deserialize(bytes)[-4:] + reply.ok.payload.deserialize(bytes)[:-4]
-            print(f'Modified payload (bytes): {payload}')
             try:
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ClearRouteResponse.deserialize(payload)))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ClearRouteResponse.deserialize(reply.ok.payload.to_bytes())))
             except Exception as e:
                 print(f'Failed to handle response: {e}')
 
@@ -119,12 +115,8 @@ class VehiclePose:
 
         replies = self.session.get(self.topic_prefix + SET_ROUTE_POINT_KEY_EXPR, payload=request)
         for reply in replies:
-            # TODO: Handle service payload deserialize error
-            print(f'Received data (bytes): {reply.ok.payload.deserialize(bytes)}')
-            payload = reply.ok.payload.deserialize(bytes)[-4:] + reply.ok.payload.deserialize(bytes)[:-4]
-            print(f'Modified payload (bytes): {payload}')
             try:
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, SetRoutePointsResponse.deserialize(payload)))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, SetRoutePointsResponse.deserialize(reply.ok.payload.to_bytes())))
             except Exception as e:
                 print(f'Failed to handle response: {e}')
 
@@ -137,13 +129,7 @@ class VehiclePose:
         replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR)
         for reply in replies:
             try:
-                # TODO: Handle service payload deserialize error
-                print(f'Received data (bytes): {reply.ok.payload.deserialize(bytes)}')
-                payload = reply.ok.payload.deserialize(bytes)[-4:] + reply.ok.payload.deserialize(bytes)[:-4]
-                print(f'Modified payload (bytes): {payload}')
-
-                # print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationMode_Response.deserialize(reply.ok.payload.deserialize(bytes))))
-                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(payload)))
+                print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(reply.ok.payload.to_bytes())))
             except Exception as e:
                 print(f'Failed to handle response: {e}')
 

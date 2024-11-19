@@ -26,12 +26,12 @@ def get_cpu_status(session, scope, use_bridge_ros2dds=True):
     prefix = scope if use_bridge_ros2dds else scope + '/rt'
     cpu_key_expr = prefix + GET_CPU_KEY_EXPR
     print(cpu_key_expr, flush=True)
-    sub = session.declare_subscriber(cpu_key_expr, reliability=zenoh.Reliability.RELIABLE)
+    sub = session.declare_subscriber(cpu_key_expr)
     cpu_status_data = None
     while cpu_status_data is None:
         time.sleep(1)
         for rep in sub:
-            cpu_status_data = CpuUsage.deserialize(rep.payload.deserialize(bytes))
+            cpu_status_data = CpuUsage.deserialize(rep.payload.to_bytes())
             break
     ### Convert object to dictionary
     cpu_status_data = class2dict(cpu_status_data)
@@ -46,12 +46,12 @@ def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
     prefix = scope if use_bridge_ros2dds else scope + '/rt'
     vehicle_status_key_expr = prefix + GET_VEHICLE_STATUS_KEY_EXPR
     print(vehicle_status_key_expr, flush=True)
-    sub = session.declare_subscriber(vehicle_status_key_expr, reliability=zenoh.Reliability.RELIABLE)
+    sub = session.declare_subscriber(vehicle_status_key_expr)
     vehicle_status_data = None
     while vehicle_status_data is None:
         time.sleep(1)
         for rep in sub:
-            vehicle_status_data = VehicleStatusStamped.deserialize(rep.payload.deserialize(bytes))
+            vehicle_status_data = VehicleStatusStamped.deserialize(rep.payload.to_bytes())
             break
     ### Convert object to dictionary
     vehicle_status_data = class2dict(vehicle_status_data)

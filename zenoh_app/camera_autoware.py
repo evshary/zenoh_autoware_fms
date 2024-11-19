@@ -22,7 +22,7 @@ class MJPEG_server:
         self.prefix = scope if use_bridge_ros2dds else scope + '/rt'
 
         def callback(sample):
-            data = Image.deserialize(sample.payload.deserialize(bytes))
+            data = Image.deserialize(sample.payload.to_bytes())
             self.camera_image = self.bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
 
         self.sub = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR, callback)
@@ -37,7 +37,7 @@ class MJPEG_server:
 
     def change_scope(self, new_scope):
         def callback(sample):
-            data = Image.deserialize(sample.payload.deserialize(bytes))
+            data = Image.deserialize(sample.payload.to_bytes())
             self.camera_image = self.bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
 
         self.sub.undeclare()

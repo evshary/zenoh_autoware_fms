@@ -208,20 +208,20 @@ files = [
 
 [[package]]
 name = "eclipse-zenoh"
-version = "1.0.0a6"
+version = "1.0.2"
 description = "The python API for Eclipse zenoh"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-linux_armv6l.whl", hash = "sha256:44196ab85af8cf6763e363517c00b18b35c54abd6829790eaa491da78be784ae"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:9041f435c2643b8407421b410b31e8a9c2e4cc7c041db2387dbd69bb69fbb79f"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:0ea7d6ecebc62a98637505c0d8880658a765543db4cee4236788cda6d37c340c"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:284efe91102b4a0a8bcf6b34ae0f281c2c38990342cb9e7a71a979f61315afb6"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:2802d580e7565e681eda255fb9af82374a6dfbe4a37af2bfe48c57a85041597f"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4049a81d97714b02989400d0bd4f2af540d18e77ce9dc7cd43af012e1c2f8f01"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:a02e0da721571521a90324cf731a8aa7f95b1dfe3f1997fa876cb9ecf75c1ad0"},
-    {file = "eclipse_zenoh-1.0.0a6-cp38-abi3-win_amd64.whl", hash = "sha256:c0340c8573f705ed7cb1245eaf0e86bc0b5b5eead0baa6af2a02d0581ede5d5a"},
-    {file = "eclipse_zenoh-1.0.0a6.tar.gz", hash = "sha256:7f73ae10e32b4c398a0274408609a13c9713aa89b9740b2207288492b812318b"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-linux_armv6l.whl", hash = "sha256:86eb01b0df57d4532f8f045f464f4277bdc54bf7e318b5a1f15c1432f3bd8279"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:652f904badc6904a1000e45b3f73932efb098538934f5bdff89348e7b41a51a1"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:cb57ebcf27f4a599972d7060f35545d65bd5c8372aa05e18cc0b2f2e573564cf"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:e5d21185ab86b3cb9dcbe177d2f55654434f3eca6227db0afad5e5e3405867df"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:187c9dc1713c22607de21afe1f0e9fdd49890ef5ebd1e9d941f3af7f000f375d"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cf0bd52390c35f7fd1d9ccba44094d8a8341c72910cb4f01e55209bd3d75b0e1"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:971496374df46fe34eb38dca080ca05022b7c459c3e59af2629b570438e170ec"},
+    {file = "eclipse_zenoh-1.0.2-cp38-abi3-win_amd64.whl", hash = "sha256:07aa7e1a2c584ac0d362d69938e374de28fd4e6766a0f23999899a2976a00df0"},
+    {file = "eclipse_zenoh-1.0.2.tar.gz", hash = "sha256:796cd2d0b5ef727351f486d802ca6d313346095cc40f28dc6cd3a924e24a09f5"},
 ]
 
 [[package]]
@@ -1129,4 +1129,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "037169a8bfabcbd517e1c2c9cb07a2089cbcdf6c297e115f88342691d625562b"
+content-hash = "61117cf535fb30b9b827418000af0f69716f8b05a009cbb69a561987ff03acea"
