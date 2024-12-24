@@ -15,11 +15,11 @@ from zenoh_ros_type.autoware_adapi_msgs import (
     VehicleKinematics,
 )
 from zenoh_ros_type.common_interfaces import (
+    Header,
     Point,
     Pose,
     Quaternion,
 )
-from zenoh_ros_type.common_interfaces.std_msgs import Header
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
