@@ -1,1 +1,1 @@
-The template is from https://github.com/srobbin01/daisyui-admin-dashboard-template
+The template is from [https://github.com/srobbin01/daisyui-admin-dashboard-template](https://github.com/srobbin01/daisyui-admin-dashboard-template)
