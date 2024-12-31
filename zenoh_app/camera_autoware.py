@@ -1,13 +1,15 @@
 import threading
 
 import cv2
+import numpy as np
 import zenoh
 from cv_bridge import CvBridge
 from flask import Flask, Response
 from werkzeug.serving import make_server
-from zenoh_ros_type.common_interfaces import Image
+from zenoh_ros_type.common_interfaces import CameraInfo
 
 IMAGE_RAW_KEY_EXPR = '/sensing/camera/traffic_light/image_raw'
+CAMERA_INFO_KEY_EXPR = '/sensing/camera/traffic_light/camera_info'
 
 # At 20 FPS, 10 frames represent 0.5 second of video data
 RING_CHANNEL_SIZE = 10
@@ -24,12 +26,16 @@ class MJPEG_server:
         self.server = None
         self.use_bridge_ros2dds = use_bridge_ros2dds
         self.prefix = scope if use_bridge_ros2dds else scope + '/rt'
-        
+        self.height = None
+        self.width = None
+
+        self.sub_info = self.session.declare_subscriber(self.prefix + CAMERA_INFO_KEY_EXPR)
+        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
+
         # Start processing thread
         self.frame_thread = threading.Thread(target=self.process_frame, daemon=True)
         self.frame_thread.start()
 
-        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
 
         @self.app.route('/')
         def index():
@@ -40,20 +46,36 @@ class MJPEG_server:
             return Response(self.generate_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
     def change_scope(self, new_scope):
+        self.sub_info.undeclare()
         self.sub_video.undeclare()
+
         self.prefix = new_scope if self.use_bridge_ros2dds else new_scope + '/rt'
+        self.sub_info = self.session.declare_subscriber(self.prefix + CAMERA_INFO_KEY_EXPR)
         self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
         self.scope = new_scope
-        
+
+        self.width = None
+        self.height = None
+
     def process_frame(self):
         while True:
             try:
+                if self.width is None or self.height is None:
+                    sample = self.sub_video.try_recv()
+                    if sample is None:
+                        continue
+                    camera_info = CameraInfo.deserialize(sample.payload.to_bytes())
+                    self.height = camera_info.height
+                    self.width = camera_info.width
+
                 sample = self.sub_video.try_recv()
                 if sample is None:
                     continue
-                
-                data = Image.deserialize(sample.payload.to_bytes())
-                self.camera_image = self.bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
+
+                data = sample.payload.to_bytes()
+                np_data = np.frombuffer(data[-(self.height * self.width * 4):], dtype=np.uint8)
+                self.camera_image = np_data.reshape((self.height, self.width, 4))
+
             except Exception as e:
                 print(f"Error processing frame: {e}")
 
