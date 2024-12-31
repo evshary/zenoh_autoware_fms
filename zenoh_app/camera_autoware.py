@@ -27,7 +27,7 @@ class MJPEG_server:
         self.frame_thread = threading.Thread(target=self.process_frame, daemon=True)
         self.frame_thread.start()
 
-    def change_scope(self, new_scope):
+    def change_vehicle(self, new_scope):
         self.processing = False
         self.frame_thread.join()
 
@@ -39,7 +39,7 @@ class MJPEG_server:
 
         self.width = None
         self.height = None
-        
+
         self.processing = True
         self.frame_thread = threading.Thread(target=self.process_frame, daemon=True)
         self.frame_thread.start()
@@ -60,7 +60,7 @@ class MJPEG_server:
                     continue
 
                 data = sample.payload.to_bytes()
-                
+
                 # Each pixel is 4 bytes (RGBA), total bytes = Height x Width x 4.
                 # Extract the last part of the ROS message as image data.
                 np_image = np.frombuffer(data[-(self.height * self.width * 4) :], dtype=np.uint8)

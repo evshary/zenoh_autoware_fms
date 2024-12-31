@@ -68,7 +68,7 @@ async def manage_teleop_startup(scope):
     manual_controller = ManualController(session, scope, use_bridge_ros2dds)
 
     if mjpeg_server is not None:
-        mjpeg_server.change_scope(scope)
+        mjpeg_server.change_vehicle(scope)
     else:
         mjpeg_server = MJPEG_server(session, scope, use_bridge_ros2dds)
     return {
