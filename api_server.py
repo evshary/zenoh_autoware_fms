@@ -71,8 +71,6 @@ async def manage_teleop_startup(scope):
         mjpeg_server.change_scope(scope)
     else:
         mjpeg_server = MJPEG_server(session, scope, use_bridge_ros2dds)
-        # mjpeg_server_thread = threading.Thread(target = mjpeg_server.run)
-        # mjpeg_server_thread.start()
     return {
         'text': f'Startup manual control on {scope}.',
         'mjpeg_host': 'localhost' if MJPEG_HOST == '0.0.0.0' else MJPEG_HOST,
@@ -121,19 +119,6 @@ async def manage_teleop_status():
         }
     else:
         return {'velocity': '---', 'gear': '---', 'steering': '---'}
-
-
-# @app.get("/map/startup")
-# async def manage_map_startup(scope):
-#     global pose_service
-#     if pose_service is  None:
-#         pose_service = PoseServer(session, scope)
-#     else:
-#         pose_service.change_scope(scope)
-
-#     return {
-#         "text": f"Startup manual control on {scope}."
-#     }
 
 
 @app.get('/map/list')
