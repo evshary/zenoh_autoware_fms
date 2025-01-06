@@ -4,6 +4,13 @@ The project is the FMS (fleet management system) prototype of Autoware based on 
 
 ![FMS Architecture](resource/Autoware_FMS_Zenoh_Architecture.svg)
 
+```mermaid
+sequenceDiagram
+Autoware AD API -) zenoh-bridge-ros2dds: vehicle status / sensor data
+zenoh-bridge-ros2dds -) Management System: Zenoh messages
+Management System -) zenoh-bridge-ros2dds: Zenoh messages
+```
+
 ## Usage
 
 ### Basic test
