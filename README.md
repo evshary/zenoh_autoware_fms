@@ -9,6 +9,7 @@ sequenceDiagram
 Autoware AD API -) zenoh-bridge-ros2dds: vehicle status / sensor data
 zenoh-bridge-ros2dds -) Management System: Zenoh messages
 Management System -) zenoh-bridge-ros2dds: Zenoh messages
+zenoh-bridge-ros2dds -) Autoware AD API: control commands
 ```
 
 ## Usage
