@@ -3,7 +3,7 @@
 MAP_PATH="frontend/public/carla_map/Town01"
 
 # Install gdown
-python3 -m pip install --upgrade gdown
+pipx install -f gdown
 
 # If map doesn't exist
 if [ ! -d $MAP_PATH ]; then
