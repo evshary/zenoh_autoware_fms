@@ -30,8 +30,8 @@ source env.sh
 ./run_server.sh
 ```
 
-- You can use environment [here](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_multiple_fms) to test FMS
-  - Remember to change the IP in `docker-compose.yml` to FMS IP.
+- You can use [the environment](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_fms_with_bridge_ros2dds) to test FMS
+  - Remember to change the environment `FMS_CONNECTION`, which means FMS IP.
 
 ### Integration with Carla
 
