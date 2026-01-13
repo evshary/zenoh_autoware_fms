@@ -1,31 +1,25 @@
-[tool.poetry]
+[project]
 name = "zenoh-autoware-fms"
 version = "0.1.0"
 description = ""
-authors = ["ChenYing Kuo <evshary@gmail.com>"]
+authors = [{ name = "ChenYing Kuo", email = "evshary@gmail.com" }]
 readme = "README.md"
-packages = [{include = "zenoh_autoware_fms"}]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-fastapi = "^0.95.1"
-eclipse-zenoh = "1.4.0"
-zenoh-ros-type = { git = "https://github.com/evshary/zenoh-ros-type-python.git", branch = "main" }
-#zenoh-ros-type = "^0.2.0"
-opencv-python = "^4.8.0.76"
-cvbridge3 = "^1.1"
-flask = "^2.3.3"
-requests = "^2.31.0"
-werkzeug = "^2.3.7"
-pyyaml = "^6.0.1"
-uvicorn = {extras = ["standard"], version = "^0.24.0.post1"}
-asyncio = "^3.4.3"
-lanelet2 = "^1.2.1"
-numpy = "^1.24.1"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.8"
+dependencies = [
+    "fastapi>=0.95.1",
+    "eclipse-zenoh==1.4.0",
+    "zenoh-ros-type @ git+https://github.com/evshary/zenoh-ros-type-python.git@main",
+    "opencv-python>=4.8.0.76",
+    "cvbridge3>=1.1",
+    "flask>=2.3.3",
+    "requests>=2.31.0",
+    "werkzeug>=2.3.7",
+    "pyyaml>=6.0.1",
+    "uvicorn[standard]>=0.24.0.post1",
+    "asyncio>=3.4.3",
+    "lanelet2>=1.2.1",
+    "numpy>=1.24.1",
+]
 
 # Ruff
 [tool.ruff]

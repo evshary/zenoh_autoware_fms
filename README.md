@@ -27,7 +27,7 @@ zenoh-bridge-ros2dds -) Autoware AD API: control commands
 ```shell
 # Before the following steps, please source ROS 2 environment
 source env.sh
-./run_server.sh
+just run
 ```
 
 - You can use [the environment](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_fms_with_bridge_ros2dds) to test FMS
