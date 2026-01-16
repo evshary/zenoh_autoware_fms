@@ -16,12 +16,13 @@ class MJPEG_server:
         self.session = zenoh_session
         self.scope = scope
         self.use_bridge_ros2dds = use_bridge_ros2dds
-        self.prefix = scope if use_bridge_ros2dds else scope + '/rt'
+        self.prefix = scope if use_bridge_ros2dds else scope + '/*'
+        self.postfix = '' if use_bridge_ros2dds else '/**'
         self.height = None
         self.width = None
         self.processing = True
 
-        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
+        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR + self.postfix, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
 
         # Start processing thread
         self.frame_thread = threading.Thread(target=self.process_frame, daemon=True)
@@ -33,8 +34,9 @@ class MJPEG_server:
 
         self.sub_video.undeclare()
 
-        self.prefix = new_scope if self.use_bridge_ros2dds else new_scope + '/rt'
-        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
+        self.prefix = new_scope if self.use_bridge_ros2dds else new_scope + '/*'
+        self.postfix = '' if self.use_bridge_ros2dds else '/**'
+        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR + self.postfix, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
         self.scope = new_scope
 
         self.width = None
@@ -71,5 +73,6 @@ class MJPEG_server:
 
 
 if __name__ == '__main__':
-    s = zenoh.open()
-    server = MJPEG_server(s, 'v1')
+    conf = zenoh.Config.from_file('config.json5')
+    session = zenoh.open(conf)
+    server = MJPEG_server(session, 'v1')

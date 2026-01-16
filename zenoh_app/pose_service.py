@@ -21,6 +21,7 @@ from zenoh_ros_type.common_interfaces import (
     Quaternion,
 )
 from zenoh_ros_type.rcl_interfaces import Time
+from zenoh_ros_type.rmw_zenoh import Attachment, Empty
 from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
 from .map_parser import OrientationParser
@@ -53,7 +54,8 @@ class VehiclePose:
         self.positionX = 0.0
         self.positionY = 0.0
 
-        self.topic_prefix = self.scope if self.use_bridge_ros2dds else self.scope + '/rt'
+        self.prefix = self.scope if self.use_bridge_ros2dds else self.scope + '/*'
+        self.postfix = '' if self.use_bridge_ros2dds else '/**'
 
         self.orientationGen = OrientationParser()
 
@@ -89,15 +91,34 @@ class VehiclePose:
 
         ### Topics
         ###### Subscribers
-        self.subscriber_pose = self.session.declare_subscriber(self.topic_prefix + GET_POSE_KEY_EXPR, callback_position)
-        self.subscriber_goalPose = self.session.declare_subscriber(self.topic_prefix + GET_GOAL_POSE_KEY_EXPR, callback_goalPosition)
+        self.subscriber_pose = self.session.declare_subscriber(self.prefix + GET_POSE_KEY_EXPR + self.postfix, callback_position)
+        self.subscriber_goalPose = self.session.declare_subscriber(self.prefix + GET_GOAL_POSE_KEY_EXPR + self.postfix, callback_goalPosition)
 
         ###### Publishers
-        self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
+        self.publisher_gate_mode = self.session.declare_publisher(self.prefix + SET_GATE_MODE_KEY_EXPR + self.postfix)
+        self.publisher_seq = 0
+        self.attachment = Attachment(
+            sequence_number=0,
+            timestamp_ns=0,
+            gid_length=16,
+            gid=list(os.urandom(16)),
+        )
+
+    def _get_attachment(self):
+        # Update and return serialized attachment for rmw_zenoh
+        if self.use_bridge_ros2dds:
+            return None
+        self.publisher_seq += 1
+        self.attachment.sequence_number = self.publisher_seq
+        self.attachment.timestamp_ns = int(time.time() * 1e9)
+        return self.attachment.serialize()
 
     def setGoal(self, lat, lon):
-        replies = self.session.get(self.topic_prefix + SET_CLEAR_ROUTE_KEY_EXPR)
-
+        replies = self.session.get(
+                self.prefix + SET_CLEAR_ROUTE_KEY_EXPR + self.postfix,
+                payload=Empty().serialize(),
+                attachment=self._get_attachment()
+        )
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, ClearRouteResponse.deserialize(reply.ok.payload.to_bytes())))
@@ -113,7 +134,11 @@ class VehiclePose:
             waypoints=[],
         ).serialize()
 
-        replies = self.session.get(self.topic_prefix + SET_ROUTE_POINT_KEY_EXPR, payload=request)
+        replies = self.session.get(
+            self.prefix + SET_ROUTE_POINT_KEY_EXPR + self.postfix,
+            payload=request,
+            attachment=self._get_attachment()
+        )
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, SetRoutePointsResponse.deserialize(reply.ok.payload.to_bytes())))
@@ -121,12 +146,19 @@ class VehiclePose:
                 print(f'Failed to handle response: {e}')
 
     def engage(self):
-        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize())
+        self.publisher_gate_mode.put(
+            GateMode(data=GateMode.DATA['AUTO'].value).serialize(),
+            attachment=self._get_attachment()
+        )
 
         # Ensure Autoware receives the gate mode change before the operation mode change
         time.sleep(1)
 
-        replies = self.session.get(self.topic_prefix + SET_AUTO_MODE_KEY_EXPR)
+        replies = self.session.get(
+            self.prefix + SET_AUTO_MODE_KEY_EXPR + self.postfix,
+            payload=Empty().serialize(),
+            attachment=self._get_attachment()
+        )
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(reply.ok.payload.to_bytes())))
@@ -146,19 +178,29 @@ class PoseServer:
 
         self.vehicles = {}
         for _ in range(time):
-            replies = self.session.get('@/**/ros2/**' + GET_POSE_KEY_EXPR)
-            for reply in replies:
-                key_expr = str(reply.ok.key_expr)
-                if 'pub' in key_expr:
-                    end = key_expr.find(GET_POSE_KEY_EXPR)
-                    vehicle = key_expr[:end].split('/')[-1]
+            if self.use_bridge_ros2dds:
+                replies = self.session.get('@/**/ros2/**' + GET_POSE_KEY_EXPR)
+                for reply in replies:
+                    key_expr = str(reply.ok.key_expr)
+                    if 'pub' in key_expr:
+                        end = key_expr.find(GET_POSE_KEY_EXPR)
+                        vehicle = key_expr[:end].split('/')[-1]
+                        print(f'find vehicle {vehicle}')
+                        self.vehicles[vehicle] = None
+            else:
+                # rmw_zenoh: query liveliness tokens with '%' encoded topic path
+                liveliness_key = GET_POSE_KEY_EXPR.replace('/', '%')
+                replies = self.session.liveliness().get('*/@ros2_lv/**/' + liveliness_key + '/**')
+                for reply in replies:
+                    key_expr = str(reply.ok.key_expr)
+                    vehicle = key_expr.split('/')[0]
                     print(f'find vehicle {vehicle}')
                     self.vehicles[vehicle] = None
         self.constructVehicle()
 
     def constructVehicle(self):
         for scope in self.vehicles.keys():
-            self.vehicles[scope] = VehiclePose(self.session, scope)
+            self.vehicles[scope] = VehiclePose(self.session, scope, self.use_bridge_ros2dds)
 
     def returnPose(self):
         poseInfo = []

@@ -1,3 +1,9 @@
+run_rmw_zenoh:
+    USE_BRIDGE_ROS2DDS=False just run
+
+run_ros2dds:
+    USE_BRIDGE_ROS2DDS=True just run
+
 run:
     echo "Connect to http://127.0.0.1:8080"
     parallel --verbose --lb ::: \

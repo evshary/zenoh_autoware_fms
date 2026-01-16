@@ -1,4 +1,3 @@
-import json
 import time
 
 import zenoh
@@ -23,8 +22,9 @@ def class2dict(instance, built_dict={}):
 
 
 def get_cpu_status(session, scope, use_bridge_ros2dds=True):
-    prefix = scope if use_bridge_ros2dds else scope + '/rt'
-    cpu_key_expr = prefix + GET_CPU_KEY_EXPR
+    prefix = scope if use_bridge_ros2dds else scope + '/*'
+    postfix = '' if use_bridge_ros2dds else '/**'
+    cpu_key_expr = prefix + GET_CPU_KEY_EXPR + postfix
     print(cpu_key_expr, flush=True)
     sub = session.declare_subscriber(cpu_key_expr)
     cpu_status_data = None
@@ -43,8 +43,9 @@ def get_cpu_status(session, scope, use_bridge_ros2dds=True):
 
 
 def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
-    prefix = scope if use_bridge_ros2dds else scope + '/rt'
-    vehicle_status_key_expr = prefix + GET_VEHICLE_STATUS_KEY_EXPR
+    prefix = scope if use_bridge_ros2dds else scope + '/*'
+    postfix = '' if use_bridge_ros2dds else '/**'
+    vehicle_status_key_expr = prefix + GET_VEHICLE_STATUS_KEY_EXPR + postfix
     print(vehicle_status_key_expr, flush=True)
     sub = session.declare_subscriber(vehicle_status_key_expr)
     vehicle_status_data = None
@@ -62,8 +63,7 @@ def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
 
 
 if __name__ == '__main__':
-    conf = zenoh.Config()
-    conf.insert_json5(zenoh.config.LISTEN_KEY, json.dumps(['tcp/172.17.0.1:7447']))
-    s = zenoh.open(conf)
-    get_cpu_status(s, 'v1')
-    get_vehicle_status(s, 'v1')
+    conf = zenoh.Config.from_file('config.json5')
+    session = zenoh.open(conf)
+    get_cpu_status(session, 'v1')
+    get_vehicle_status(session, 'v1')

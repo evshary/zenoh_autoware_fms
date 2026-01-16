@@ -12,7 +12,7 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
         if use_bridge_ros2dds:
             replies = session.get('@/**/ros2/config')
         else:
-            replies = session.get('@/service/**/config', zenoh.Queue())
+            replies = session.get('@/**/config/**')
         for reply in replies:
             try:
                 key_expr_ = str(reply.ok.key_expr)
@@ -23,8 +23,8 @@ def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
                     # Need to remove /
                     scope = payload_['namespace'][1:]
                 else:
-                    uuid = key_expr_.split('/')[2].lower()
-                    scope = payload_['scope']
+                    uuid = payload_['routers'][0]
+                    scope = key_expr_.split('/')[4].lower()
 
                 if uuid not in agent_infos.keys():
                     agent_infos[uuid] = {}
