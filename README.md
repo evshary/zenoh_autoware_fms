@@ -27,7 +27,12 @@ zenoh-bridge-ros2dds -) Autoware AD API: control commands
 ```shell
 # Before the following steps, please source ROS 2 environment
 source env.sh
-just run
+
+# Run with rmw_zenoh (without zenoh-bridge-ros2dds)
+just run_rmw_zenoh
+
+# Or run with zenoh-bridge-ros2dds
+just run_ros2dds
 ```
 
 - You can use [the environment](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_fms_with_bridge_ros2dds) to test FMS
@@ -51,8 +56,7 @@ Please check our roadmap in [GitHub Project](https://github.com/users/evshary/pr
 You can use pre-commit and Ruff to have correct Python format
 
 ```shell
-python3 -m pip install pre-commit ruff
-pre-commit install --install-hooks
+uv run pre-commit install --install-hooks
 ```
 
 ## Autoware Topics & Services in Use
