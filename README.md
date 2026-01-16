@@ -56,8 +56,7 @@ Please check our roadmap in [GitHub Project](https://github.com/users/evshary/pr
 You can use pre-commit and Ruff to have correct Python format
 
 ```shell
-python3 -m pip install pre-commit ruff
-pre-commit install --install-hooks
+uv run pre-commit install --install-hooks
 ```
 
 ## Autoware Topics & Services in Use

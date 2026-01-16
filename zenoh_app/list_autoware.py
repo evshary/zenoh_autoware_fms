@@ -1,7 +1,5 @@
 import json
 
-import zenoh
-
 
 def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
     ### uuid --> scope, address

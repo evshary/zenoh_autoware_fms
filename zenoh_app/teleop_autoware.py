@@ -33,10 +33,9 @@ class ManualController:
 
         self.target_velocity = 0
         self.target_angle = 0
-        
+
         self.prefix = scope if use_bridge_ros2dds else scope + '/*'
         self.postfix = '' if use_bridge_ros2dds else '/**'
-
 
         def callback_status(sample):
             data = VehicleStatusStamped.deserialize(sample.payload.to_bytes())
@@ -52,7 +51,7 @@ class ManualController:
         self.publisher_gate_mode = self.session.declare_publisher(self.prefix + SET_GATE_MODE_KEY_EXPR + self.postfix)
         self.publisher_gear = self.session.declare_publisher(self.prefix + SET_GEAR_KEY_EXPR + self.postfix)
         self.publisher_control = self.session.declare_publisher(self.prefix + SET_CONTROL_KEY_EXPR + self.postfix)
-        
+
         self.publisher_seq = 0
         self.attachment = Attachment(
             sequence_number=0,
@@ -60,7 +59,7 @@ class ManualController:
             gid_length=16,
             gid=self.list(os.urandom(16)),
         )
-        
+
         ### Control command
         self.control_command = Control(
             stamp=Time(sec=0, nanosec=0),
@@ -68,38 +67,34 @@ class ManualController:
             lateral=Lateral(
                 stamp=Time(sec=0, nanosec=0),
                 control_time=Time(sec=0, nanosec=0),
-                steering_tire_angle=0, 
+                steering_tire_angle=0,
                 steering_tire_rotation_rate=0,
-                is_defined_steering_tire_rotation_rate=False),
+                is_defined_steering_tire_rotation_rate=False,
+            ),
             longitudinal=Longitudinal(
                 stamp=Time(sec=0, nanosec=0),
                 control_time=Time(sec=0, nanosec=0),
-                velocity=0, 
-                acceleration=0, 
+                velocity=0,
+                acceleration=0,
                 jerk=0,
                 is_defined_acceleration=False,
-                is_defined_jerk=False),
+                is_defined_jerk=False,
+            ),
         )
 
         ### Startup external control
-        self.publisher_gate_mode.put(
-            GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize(),
-            attachment=self._get_attachment()
-        )
-        
+        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize(), attachment=self._get_attachment())
+
         # Ensure Autoware receives the gate mode change before the operation mode change
         time.sleep(1)
         replies = self.session.get(
-            self.prefix + SET_REMOTE_MODE_KEY_EXPR + self.postfix,
-            payload=Empty().serialize(), 
-            attachment=self._get_attachment()
+            self.prefix + SET_REMOTE_MODE_KEY_EXPR + self.postfix, payload=Empty().serialize(), attachment=self._get_attachment()
         )
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(reply.ok.payload.to_bytes())))
             except Exception as e:
                 print(f'Failed to handle response: {e}')
-
 
         ### Create new thread to send control command
         self.thread = Thread(target=self.pub_control)
@@ -122,9 +117,7 @@ class ManualController:
     def pub_gear(self, gear):
         gear_val = GearShift.DATA[gear.upper()].value
         self.publisher_gear.put(
-            GearShiftStamped(stamp=Time(sec=0, nanosec=0), 
-                             gear_shift=GearShift(data=gear_val)).serialize(),
-            attachment = self._get_attachment()
+            GearShiftStamped(stamp=Time(sec=0, nanosec=0), gear_shift=GearShift(data=gear_val)).serialize(), attachment=self._get_attachment()
         )
 
     def update_control_command(self, velocity, angle):
@@ -155,10 +148,7 @@ class ManualController:
             self.control_command.longitudinal.velocity = self.target_velocity
             self.control_command.longitudinal.acceleration = acceleration
             self.control_command.stamp.nanosec += 1
-            self.publisher_control.put(
-                self.control_command.serialize(),
-                attachment=self._get_attachment()
-            )
+            self.publisher_control.put(self.control_command.serialize(), attachment=self._get_attachment())
 
             ### Set interval
             time.sleep(0.33)

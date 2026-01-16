@@ -115,9 +115,7 @@ class VehiclePose:
 
     def setGoal(self, lat, lon):
         replies = self.session.get(
-                self.prefix + SET_CLEAR_ROUTE_KEY_EXPR + self.postfix,
-                payload=Empty().serialize(),
-                attachment=self._get_attachment()
+            self.prefix + SET_CLEAR_ROUTE_KEY_EXPR + self.postfix, payload=Empty().serialize(), attachment=self._get_attachment()
         )
         for reply in replies:
             try:
@@ -134,11 +132,7 @@ class VehiclePose:
             waypoints=[],
         ).serialize()
 
-        replies = self.session.get(
-            self.prefix + SET_ROUTE_POINT_KEY_EXPR + self.postfix,
-            payload=request,
-            attachment=self._get_attachment()
-        )
+        replies = self.session.get(self.prefix + SET_ROUTE_POINT_KEY_EXPR + self.postfix, payload=request, attachment=self._get_attachment())
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, SetRoutePointsResponse.deserialize(reply.ok.payload.to_bytes())))
@@ -146,18 +140,13 @@ class VehiclePose:
                 print(f'Failed to handle response: {e}')
 
     def engage(self):
-        self.publisher_gate_mode.put(
-            GateMode(data=GateMode.DATA['AUTO'].value).serialize(),
-            attachment=self._get_attachment()
-        )
+        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize(), attachment=self._get_attachment())
 
         # Ensure Autoware receives the gate mode change before the operation mode change
         time.sleep(1)
 
         replies = self.session.get(
-            self.prefix + SET_AUTO_MODE_KEY_EXPR + self.postfix,
-            payload=Empty().serialize(),
-            attachment=self._get_attachment()
+            self.prefix + SET_AUTO_MODE_KEY_EXPR + self.postfix, payload=Empty().serialize(), attachment=self._get_attachment()
         )
         for reply in replies:
             try:

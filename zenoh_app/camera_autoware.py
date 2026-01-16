@@ -22,7 +22,9 @@ class MJPEG_server:
         self.width = None
         self.processing = True
 
-        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR + self.postfix, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
+        self.sub_video = self.session.declare_subscriber(
+            self.prefix + IMAGE_RAW_KEY_EXPR + self.postfix, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE)
+        )
 
         # Start processing thread
         self.frame_thread = threading.Thread(target=self.process_frame, daemon=True)
@@ -36,7 +38,9 @@ class MJPEG_server:
 
         self.prefix = new_scope if self.use_bridge_ros2dds else new_scope + '/*'
         self.postfix = '' if self.use_bridge_ros2dds else '/**'
-        self.sub_video = self.session.declare_subscriber(self.prefix + IMAGE_RAW_KEY_EXPR + self.postfix, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE))
+        self.sub_video = self.session.declare_subscriber(
+            self.prefix + IMAGE_RAW_KEY_EXPR + self.postfix, zenoh.handlers.RingChannel(RING_CHANNEL_SIZE)
+        )
         self.scope = new_scope
 
         self.width = None

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = [{ name = "ChenYing Kuo", email = "evshary@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.95.1",
     "eclipse-zenoh==1.6.2",
@@ -19,6 +19,12 @@ dependencies = [
     "asyncio>=3.4.3",
     "lanelet2>=1.2.1",
     "numpy>=1.24.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "ruff>=0.8.0",
 ]
 
 # Ruff
