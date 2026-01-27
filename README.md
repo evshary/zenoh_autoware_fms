@@ -25,9 +25,6 @@ zenoh-bridge-ros2dds -) Autoware AD API: control commands
 - Run Web Server & API Server
 
 ```shell
-# Before the following steps, please source ROS 2 environment
-source env.sh
-
 # Run with rmw_zenoh (without zenoh-bridge-ros2dds)
 just run_rmw_zenoh
 

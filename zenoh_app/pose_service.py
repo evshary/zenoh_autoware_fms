@@ -96,26 +96,18 @@ class VehiclePose:
 
         ###### Publishers
         self.publisher_gate_mode = self.session.declare_publisher(self.prefix + SET_GATE_MODE_KEY_EXPR + self.postfix)
-        self.publisher_seq = 0
-        self.attachment = Attachment(
-            sequence_number=0,
-            timestamp_ns=0,
-            gid_length=16,
-            gid=list(os.urandom(16)),
-        )
 
-    def _get_attachment(self):
-        # Update and return serialized attachment for rmw_zenoh
-        if self.use_bridge_ros2dds:
-            return None
-        self.publisher_seq += 1
-        self.attachment.sequence_number = self.publisher_seq
-        self.attachment.timestamp_ns = int(time.time() * 1e9)
-        return self.attachment.serialize()
+        if not self.use_bridge_ros2dds:
+            self.attachment_clear_route = Attachment()
+            self.attachment_route_point = Attachment()
+            self.attachment_gate_mode = Attachment()
+            self.attachment_auto_mode = Attachment()
 
     def setGoal(self, lat, lon):
         replies = self.session.get(
-            self.prefix + SET_CLEAR_ROUTE_KEY_EXPR + self.postfix, payload=Empty().serialize(), attachment=self._get_attachment()
+            self.prefix + SET_CLEAR_ROUTE_KEY_EXPR + self.postfix,
+            payload=Empty().serialize(),
+            attachment=None if self.use_bridge_ros2dds else self.attachment_clear_route.serialize(),
         )
         for reply in replies:
             try:
@@ -132,7 +124,11 @@ class VehiclePose:
             waypoints=[],
         ).serialize()
 
-        replies = self.session.get(self.prefix + SET_ROUTE_POINT_KEY_EXPR + self.postfix, payload=request, attachment=self._get_attachment())
+        replies = self.session.get(
+            self.prefix + SET_ROUTE_POINT_KEY_EXPR + self.postfix,
+            payload=request,
+            attachment=None if self.use_bridge_ros2dds else self.attachment_route_point.serialize(),
+        )
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, SetRoutePointsResponse.deserialize(reply.ok.payload.to_bytes())))
@@ -140,13 +136,18 @@ class VehiclePose:
                 print(f'Failed to handle response: {e}')
 
     def engage(self):
-        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['AUTO'].value).serialize(), attachment=self._get_attachment())
+        self.publisher_gate_mode.put(
+            GateMode(data=GateMode.DATA['AUTO'].value).serialize(),
+            attachment=None if self.use_bridge_ros2dds else self.attachment_gate_mode.serialize(),
+        )
 
         # Ensure Autoware receives the gate mode change before the operation mode change
         time.sleep(1)
 
         replies = self.session.get(
-            self.prefix + SET_AUTO_MODE_KEY_EXPR + self.postfix, payload=Empty().serialize(), attachment=self._get_attachment()
+            self.prefix + SET_AUTO_MODE_KEY_EXPR + self.postfix,
+            payload=Empty().serialize(),
+            attachment=None if self.use_bridge_ros2dds else self.attachment_auto_mode.serialize(),
         )
         for reply in replies:
             try:
