@@ -5,9 +5,10 @@ import zenoh
 from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationModeResponse
 from zenoh_ros_type.autoware_msgs import Control, Lateral, Longitudinal
 from zenoh_ros_type.rcl_interfaces import Time
+from zenoh_ros_type.rmw_zenoh import Attachment, Empty
 from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
 
-GET_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
+GET_VEHICLE_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
 SET_REMOTE_MODE_KEY_EXPR = '/api/operation_mode/change_to_remote'
 SET_GEAR_KEY_EXPR = '/api/external/set/command/remote/shift'
 
@@ -21,6 +22,7 @@ class ManualController:
         ### Information
         self.session = session
         self.scope = scope
+        self.use_bridge_ros2dds = use_bridge_ros2dds
 
         self.end_event = Event()
 
@@ -31,7 +33,8 @@ class ManualController:
         self.target_velocity = 0
         self.target_angle = 0
 
-        self.topic_prefix = scope if use_bridge_ros2dds else scope + '/rt'
+        self.prefix = scope if use_bridge_ros2dds else scope + '/*'
+        self.postfix = '' if use_bridge_ros2dds else '/**'
 
         def callback_status(sample):
             data = VehicleStatusStamped.deserialize(sample.payload.to_bytes())
@@ -42,12 +45,17 @@ class ManualController:
 
         ### Topics
         ###### Subscribers
-        self.subscriber_status = self.session.declare_subscriber(self.topic_prefix + GET_STATUS_KEY_EXPR, callback_status)
-
+        self.subscriber_status = self.session.declare_subscriber(self.prefix + GET_VEHICLE_STATUS_KEY_EXPR + self.postfix, callback_status)
         ###### Publishers
-        self.publisher_gate_mode = self.session.declare_publisher(self.topic_prefix + SET_GATE_MODE_KEY_EXPR)
-        self.publisher_gear = self.session.declare_publisher(self.topic_prefix + SET_GEAR_KEY_EXPR)
-        self.publisher_control = self.session.declare_publisher(self.topic_prefix + SET_CONTROL_KEY_EXPR)
+        self.publisher_gate_mode = self.session.declare_publisher(self.prefix + SET_GATE_MODE_KEY_EXPR + self.postfix)
+        self.publisher_gear = self.session.declare_publisher(self.prefix + SET_GEAR_KEY_EXPR + self.postfix)
+        self.publisher_control = self.session.declare_publisher(self.prefix + SET_CONTROL_KEY_EXPR + self.postfix)
+
+        if not use_bridge_ros2dds:
+            self.attachment_gate_mode = Attachment()
+            self.attachment_gear = Attachment()
+            self.attachment_control = Attachment()
+            self.attachment_remote_mode = Attachment()
 
         ### Control command
         self.control_command = Control(
@@ -56,32 +64,39 @@ class ManualController:
             lateral=Lateral(
                 stamp=Time(sec=0, nanosec=0),
                 control_time=Time(sec=0, nanosec=0),
-                steering_tire_angle=0, 
+                steering_tire_angle=0,
                 steering_tire_rotation_rate=0,
-                is_defined_steering_tire_rotation_rate=False),
+                is_defined_steering_tire_rotation_rate=False,
+            ),
             longitudinal=Longitudinal(
                 stamp=Time(sec=0, nanosec=0),
                 control_time=Time(sec=0, nanosec=0),
-                velocity=0, 
-                acceleration=0, 
+                velocity=0,
+                acceleration=0,
                 jerk=0,
                 is_defined_acceleration=False,
-                is_defined_jerk=False),
+                is_defined_jerk=False,
+            ),
         )
 
         ### Startup external control
-        self.publisher_gate_mode.put(GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize())
-        
+        self.publisher_gate_mode.put(
+            GateMode(data=GateMode.DATA['EXTERNAL'].value).serialize(),
+            attachment=None if self.use_bridge_ros2dds else self.attachment_gate_mode.serialize(),
+        )
+
         # Ensure Autoware receives the gate mode change before the operation mode change
         time.sleep(1)
-        
-        replies = self.session.get(self.topic_prefix + SET_REMOTE_MODE_KEY_EXPR)
+        replies = self.session.get(
+            self.prefix + SET_REMOTE_MODE_KEY_EXPR + self.postfix,
+            payload=Empty().serialize(),
+            attachment=None if self.use_bridge_ros2dds else self.attachment_remote_mode.serialize(),
+        )
         for reply in replies:
             try:
                 print(">> Received ('{}': {})".format(reply.ok.key_expr, ChangeOperationModeResponse.deserialize(reply.ok.payload.to_bytes())))
             except Exception as e:
                 print(f'Failed to handle response: {e}')
-
 
         ### Create new thread to send control command
         self.thread = Thread(target=self.pub_control)
@@ -94,7 +109,10 @@ class ManualController:
 
     def pub_gear(self, gear):
         gear_val = GearShift.DATA[gear.upper()].value
-        self.publisher_gear.put(GearShiftStamped(stamp=Time(sec=0, nanosec=0), gear_shift=GearShift(data=gear_val)).serialize())
+        self.publisher_gear.put(
+            GearShiftStamped(stamp=Time(sec=0, nanosec=0), gear_shift=GearShift(data=gear_val)).serialize(),
+            attachment=None if self.use_bridge_ros2dds else self.attachment_gear.serialize(),
+        )
 
     def update_control_command(self, velocity, angle):
         if velocity is not None:
@@ -124,14 +142,17 @@ class ManualController:
             self.control_command.longitudinal.velocity = self.target_velocity
             self.control_command.longitudinal.acceleration = acceleration
             self.control_command.stamp.nanosec += 1
-            self.publisher_control.put(self.control_command.serialize())
+            self.publisher_control.put(
+                self.control_command.serialize(), attachment=None if self.use_bridge_ros2dds else self.attachment_control.serialize()
+            )
 
             ### Set interval
             time.sleep(0.33)
 
 
 if __name__ == '__main__':
-    session = zenoh.open()
+    conf = zenoh.Config.from_file('config.json5')
+    session = zenoh.open(conf)
     mc = ManualController(session, 'v1')
 
     while True:

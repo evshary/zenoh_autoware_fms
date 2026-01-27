@@ -1,5 +1,6 @@
 import asyncio
 import math
+import os
 
 import cv2
 import zenoh
@@ -20,7 +21,7 @@ app.add_middleware(CORSMiddleware, allow_origins=['*'])
 
 conf = zenoh.Config.from_file('config.json5')
 session = zenoh.open(conf)
-use_bridge_ros2dds = True
+use_bridge_ros2dds = os.environ.get('USE_BRIDGE_ROS2DDS') == 'True'
 manual_controller = None
 mjpeg_server = None
 pose_service = PoseServer(session, use_bridge_ros2dds)
