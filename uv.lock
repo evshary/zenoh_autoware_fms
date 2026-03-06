@@ -1277,7 +1277,7 @@ dev = [
 [[package]]
 name = "zenoh-ros-type"
 version = "0.3.0"
-source = { git = "https://github.com/evshary/zenoh-ros-type-python.git?rev=main#0c0cd0b84da282702b6f2dc8fb3000df98a5a2fa" }
+source = { git = "https://github.com/evshary/zenoh-ros-type-python.git?rev=main#ade08cd0bf106cfbe61cb448561faac72c0fc4e6" }
 dependencies = [
     { name = "pycdr2" },
 ]
