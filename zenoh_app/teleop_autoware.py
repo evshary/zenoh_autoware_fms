@@ -2,19 +2,20 @@ import time
 from threading import Event, Thread
 
 import zenoh
-from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationModeResponse
-from zenoh_ros_type.autoware_msgs import Control, Lateral, Longitudinal
+from zenoh_ros_type.autoware_adapi_msgs import ChangeOperationModeResponse, Gear, VehicleKinematics, VehicleStatus
+from zenoh_ros_type.autoware_msgs import Control, GearCommand, Lateral, Longitudinal
 from zenoh_ros_type.rcl_interfaces import Time
 from zenoh_ros_type.rmw_zenoh import Attachment, Empty
-from zenoh_ros_type.tier4_autoware_msgs import GateMode, GearShift, GearShiftStamped, VehicleStatusStamped
+from zenoh_ros_type.tier4_autoware_msgs import GateMode
 
-GET_VEHICLE_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
+GET_VEHICLE_STATUS_KEY_EXPR = '/api/vehicle/status'
+GET_VEHICLE_KINEMATICS_KEY_EXPR = '/api/vehicle/kinematics'
 SET_REMOTE_MODE_KEY_EXPR = '/api/operation_mode/change_to_remote'
-SET_GEAR_KEY_EXPR = '/api/external/set/command/remote/shift'
 
 ### TODO: Should be replaced by ADAPI
 SET_GATE_MODE_KEY_EXPR = '/control/gate_mode_cmd'
 SET_CONTROL_KEY_EXPR = '/external/selected/control_cmd'
+SET_GEAR_KEY_EXPR = '/external/selected/gear_cmd'
 
 
 class ManualController:
@@ -37,15 +38,21 @@ class ManualController:
         self.postfix = '' if use_bridge_ros2dds else '/**'
 
         def callback_status(sample):
-            data = VehicleStatusStamped.deserialize(sample.payload.to_bytes())
-            self.current_velocity = data.status.twist.linear.x
-            gear_val = data.status.gear_shift.data
-            self.current_gear = GearShift.DATA(gear_val).name
-            self.current_steer = data.status.steering.data
+            data = VehicleStatus.deserialize(sample.payload.to_bytes())
+            gear_val = data.gear.status
+            self.current_gear = Gear.STATUS(gear_val).name
+            self.current_steer = data.steering_tire_angle
+
+        def callback_kinematics(sample):
+            data = VehicleKinematics.deserialize(sample.payload.to_bytes())
+            self.current_velocity = data.twist.twist.twist.linear.x
 
         ### Topics
         ###### Subscribers
         self.subscriber_status = self.session.declare_subscriber(self.prefix + GET_VEHICLE_STATUS_KEY_EXPR + self.postfix, callback_status)
+        self.subscriber_kinematics = self.session.declare_subscriber(
+            self.prefix + GET_VEHICLE_KINEMATICS_KEY_EXPR + self.postfix, callback_kinematics
+        )
         ###### Publishers
         self.publisher_gate_mode = self.session.declare_publisher(self.prefix + SET_GATE_MODE_KEY_EXPR + self.postfix)
         self.publisher_gear = self.session.declare_publisher(self.prefix + SET_GEAR_KEY_EXPR + self.postfix)
@@ -57,9 +64,14 @@ class ManualController:
             self.attachment_control = Attachment()
             self.attachment_remote_mode = Attachment()
 
+        ### Gear command stamp
+        now = time.time()
+        self.gear_stamp = Time(sec=int(now), nanosec=int((now - int(now)) * 1e9))
+
         ### Control command
+        now = time.time()
         self.control_command = Control(
-            stamp=Time(sec=0, nanosec=0),
+            stamp=Time(sec=int(now), nanosec=int((now - int(now)) * 1e9)),
             control_time=Time(sec=0, nanosec=0),
             lateral=Lateral(
                 stamp=Time(sec=0, nanosec=0),
@@ -108,9 +120,10 @@ class ManualController:
         self.thread.join()
 
     def pub_gear(self, gear):
-        gear_val = GearShift.DATA[gear.upper()].value
+        gear_val = GearCommand.COMMAND[gear.upper()].value
+        self.gear_stamp.nanosec += 1
         self.publisher_gear.put(
-            GearShiftStamped(stamp=Time(sec=0, nanosec=0), gear_shift=GearShift(data=gear_val)).serialize(),
+            GearCommand(stamp=Time(sec=self.gear_stamp.sec, nanosec=self.gear_stamp.nanosec), command=gear_val).serialize(),
             attachment=None if self.use_bridge_ros2dds else self.attachment_gear.serialize(),
         )
 
@@ -139,7 +152,7 @@ class ManualController:
             self.control_command.lateral.steering_tire_angle = self.target_angle
 
             ### Pub control
-            self.control_command.longitudinal.velocity = self.target_velocity
+            self.control_command.longitudinal.velocity = _real_target_speed
             self.control_command.longitudinal.acceleration = acceleration
             self.control_command.stamp.nanosec += 1
             self.publisher_control.put(

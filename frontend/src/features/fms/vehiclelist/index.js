@@ -69,10 +69,10 @@ function Lists() {
                                         user: {v.status.cpu.all.usr}   <br/>
                                     </td>
                                     <td>
-                                        Turn: {v.status.vehicle.status.turn_signal.data}<br/>
-                                        Gear: {v.status.vehicle.status.gear_shift.data}<br/>
-                                        Steering: {v.status.vehicle.status.steering.data}<br/>
-                                        Velocity: {v.status.vehicle.status.twist.linear.x}<br/>
+                                        Turn: {v.status.vehicle.turn_indicators.status}<br/>
+                                        Gear: {v.status.vehicle.gear.status}<br/>
+                                        Steering: {v.status.vehicle.steering_tire_angle}<br/>
+                                        Velocity: {v.status.kinematics.twist.twist.twist.linear.x}<br/>
                                     </td>
                                     </tr>
                                 )

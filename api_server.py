@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from zenoh_app.camera_autoware import MJPEG_server
 from zenoh_app.list_autoware import list_autoware
 from zenoh_app.pose_service import PoseServer
-from zenoh_app.status_autoware import get_cpu_status, get_vehicle_status
+from zenoh_app.status_autoware import get_cpu_status, get_vehicle_kinematics, get_vehicle_status
 from zenoh_app.teleop_autoware import ManualController
 
 MJPEG_HOST = '0.0.0.0'
@@ -39,7 +39,11 @@ async def manage_list_autoware():
 
 @app.get('/status/{scope}')
 async def manage_status_autoware(scope):
-    return {'cpu': get_cpu_status(session, scope, use_bridge_ros2dds), 'vehicle': get_vehicle_status(session, scope, use_bridge_ros2dds)}
+    return {
+        'cpu': get_cpu_status(session, scope, use_bridge_ros2dds),
+        'vehicle': get_vehicle_status(session, scope, use_bridge_ros2dds),
+        'kinematics': get_vehicle_kinematics(session, scope, use_bridge_ros2dds),
+    }
 
 
 @app.websocket('/video')
