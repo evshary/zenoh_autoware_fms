@@ -62,7 +62,7 @@ async def handle_ws(websocket: WebSocket):
                 await websocket.send_bytes(frame_bytes)
                 await asyncio.sleep(0.1)
     except WebSocketDisconnect:
-        await websocket.close()
+        pass
 
 
 @app.get('/teleop/startup')
