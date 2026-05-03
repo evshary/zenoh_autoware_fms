@@ -1,56 +1,34 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { useDispatch } from "react-redux"
 import axios from 'axios'
 
 export const startupTeleop = createAsyncThunk('teleop/startup', async (scope) => {
-	if(scope !== "None"){
-		const res = await axios.get(`/teleop/startup?scope=${scope}`, {})
-	}
+    if (scope !== "None") {
+        await axios.get(`/teleop/startup?scope=${scope}`, {})
+    }
     return scope
 })
-
-export const setGear =  async (scope, gear) => {
-	const response = await axios.get(`/teleop/gear?scope=${scope}&gear=${gear}`, {});
-	return response;
-}
-
-export const setVelocity =  async (scope, velocity) => {
-	const response = await axios.get(`/teleop/velocity?scope=${scope}&velocity=${velocity}`, {});
-	return response;
-}
-
-export const setTurn =  async (scope, angle) => {
-	const response = await axios.get(`/teleop/turn?scope=${scope}&angle=${angle}`, {});
-	return response;
-}
 
 export const teleopSlice = createSlice({
     name: 'teleop',
     initialState: {
-		isLoading: false,
+        isLoading: false,
         teleopScope: "None",
-		cameraUrl: "http://127.0.0.1:5000/video"
+        latency: 0,
+        isControlling: false,
     },
     reducers: {
+        updateLatency: (state, action) => { state.latency = action.payload; },
+        updateControlStatus: (state, action) => { state.isControlling = action.payload; },
     },
     extraReducers: builder => {
-		builder.addCase(startupTeleop.pending, state => {
-			state.isLoading = true
-			return state;
-		})
-		builder.addCase(startupTeleop.fulfilled, (state, action) => {
-			const currentTime = new Date();
-			const newUrl = `${state.cameraUrl}?${currentTime.getTime()}`
-			state.isLoading = false
-			state.cameraUrl = newUrl
-			state.teleopScope = action.payload
-			return state;
-		})
-		builder.addCase(startupTeleop.rejected, state => {
-			state.isLoading = false
-			return state;
-		})
-	},
+        builder.addCase(startupTeleop.pending, state => { state.isLoading = true })
+        builder.addCase(startupTeleop.fulfilled, (state, action) => {
+            state.isLoading = false
+            state.teleopScope = action.payload
+        })
+        builder.addCase(startupTeleop.rejected, state => { state.isLoading = false })
+    },
 })
 
+export const { updateLatency, updateControlStatus } = teleopSlice.actions
 export default teleopSlice.reducer
