@@ -195,12 +195,16 @@ class PoseServer:
     def returnPose(self):
         poseInfo = []
         for scope, vehicle in self.vehicles.items():
+            if vehicle is None:
+                continue
             poseInfo.append({'name': scope, 'lat': vehicle.lat, 'lon': vehicle.lon})
         return poseInfo
 
     def returnGoalPose(self):
         goalPoseInfo = []
         for scope, vehicle in self.vehicles.items():
+            if vehicle is None:
+                continue
             if vehicle.goalValid:
                 goalPoseInfo.append({'name': scope, 'lat': vehicle.goalLat, 'lon': vehicle.goalLon})
         return goalPoseInfo
