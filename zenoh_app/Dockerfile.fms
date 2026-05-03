@@ -1,0 +1,12 @@
+FROM zenoh-autoware-1.5.0
+
+RUN pip3 install eclipse-zenoh==1.1.0
+
+RUN apt-get update && apt-get install -y \
+    iputils-ping \
+    net-tools \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+LABEL version="1.0.0-fms"
+LABEL description="Autoware Zenoh image with pre-baked teleop dependencies"
