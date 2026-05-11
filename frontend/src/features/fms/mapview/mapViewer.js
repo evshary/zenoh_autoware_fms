@@ -177,12 +177,12 @@ const MapViewer = (props) => {
 
 
     useEffect(() => {
-        if (mapRef.current && ways.length > 0) {
+        if (mapRef.current && Array.isArray(ways) && ways.length > 0) {
             // Calculate the bounds of all the polylines
             const bounds = calculateBounds(ways);
 
             // Fit the map view to the calculated bounds
-            mapRef.current.fitBounds(bounds);
+            if (bounds.length > 0) mapRef.current.fitBounds(bounds);
         }
     }, [ways]);
 
@@ -206,7 +206,16 @@ const MapViewer = (props) => {
     }
     else {
         let centerX = 0, centerY = 0;
-        let len = Object.keys(nodes).length;
+        let len = Object.keys(nodes || {}).length;
+        if (len === 0) {
+            return (
+                <div className={props.classname}>
+                    <div style={{height:600}} className="flex items-center justify-center bg-base-200 rounded text-base-content/70 text-sm p-4">
+                        Map data unavailable. Check that <code className="mx-1">{xmlData ? 'lanelet2_map.osm parsed empty' : 'REACT_APP_MAP_FILE_PATH'}</code> resolves to a lanelet OSM file.
+                    </div>
+                </div>
+            );
+        }
         Object.values(nodes).map((value) => {
             centerX = centerX + value[0];
             centerY = centerY + value[1];

@@ -4,7 +4,8 @@ version = "0.1.0"
 description = ""
 authors = [{ name = "ChenYing Kuo", email = "evshary@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.10"
+# Upper bound: lanelet2 has no cp313 wheel and no sdist.
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "fastapi>=0.95.1",
     "eclipse-zenoh==1.7.2",

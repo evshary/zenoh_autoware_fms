@@ -1,10 +1,29 @@
-import { useEffect, useState, useRef, forwardRef } from "react"
+import { Component, useEffect, useState, useRef, forwardRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import TitleCard from "../../../components/Cards/TitleCard"
 import  MapViewer  from "./mapViewer"
 // import { Refresh } from "../vehiclelist"
 import { getVehicleList, setVehicleGoal, setEngage } from "./mapViewSlice"
+import { MAP_FILE_PATH, MAP_CENTER } from "./mapConfig"
 import axios from 'axios'
+
+// Confines react-leaflet render errors to the map panel.
+class MapErrorBoundary extends Component {
+    constructor(props) { super(props); this.state = { error: null }; }
+    static getDerivedStateFromError(error) { return { error }; }
+    componentDidCatch(error, info) { console.error("MapView crashed:", error, info); }
+    render() {
+        if (this.state.error) {
+            return (
+                <div style={{height:600}} className="flex flex-col items-center justify-center bg-base-200 rounded text-base-content/70 text-sm p-4 gap-2">
+                    <div>Map view failed to render.</div>
+                    <code className="text-xs opacity-70">{String(this.state.error.message || this.state.error)}</code>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 
 const RefreshVehicles = (props) => {
@@ -220,25 +239,23 @@ function MapPanel() {
         }
       }, [clickPose]);
     
-    const xmlFilePath = process.env.REACT_APP_MAP_FILE_PATH;
-    const originX = process.env.REACT_APP_MAP_ORIGIN_LAT;
-    const originY = process.env.REACT_APP_MAP_ORIGIN_LON;
-
     return (
         <>
             <TitleCard title="Map Viewer" TopSideButtons={<RefreshVehicles isLoading={listLoading}/>}>
                 <div className="flex gap-4">
-                    <MapViewer 
-                        classname="w-3/5" 
-                        xmlFile={xmlFilePath} 
-                        center={[originX, originY]} 
-                        currentMarker={vehiclePose}
-                        goalMarker={goalPose}
-                        setGoalMarker={goalCandidate}
-                        clickAction={getCoordinate}
-                        zoomLevel={zoomLevel}
-                        zoomAction={setZoomLevel}
-                    />
+                    <MapErrorBoundary>
+                        <MapViewer
+                            classname="w-3/5"
+                            xmlFile={MAP_FILE_PATH}
+                            center={MAP_CENTER}
+                            currentMarker={vehiclePose}
+                            goalMarker={goalPose}
+                            setGoalMarker={goalCandidate}
+                            clickAction={getCoordinate}
+                            zoomLevel={zoomLevel}
+                            zoomAction={setZoomLevel}
+                        />
+                    </MapErrorBoundary>
                     <div className="w-2/5 grid grid-rows-10 gap-2">
                         <div className="row-span-1">
                             <h6 className="block mb-2 text-2xl font-medium text-gray-900 dark:text-white">Start a new planning</h6>
