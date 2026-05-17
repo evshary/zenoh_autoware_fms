@@ -119,6 +119,24 @@ backend_start_sim() {
         warn "Carla binary not at $CARLA_BIN; skipping sim startup"
         return 0
     fi
+    # A long-lived Carla degrades (5s RPC timeouts, stale actors) and then
+    # silently breaks the engage handshake or spawns no ego vehicle, so
+    # prepare_env defaults to a deterministic restart: kill any running
+    # Carla and start a known-good instance. Set CARLA_REUSE=1 to keep an
+    # existing instance for fast iteration when it is known healthy.
+    if [ "${CARLA_REUSE:-0}" = "1" ] && nc -z localhost 2000 2>/dev/null; then
+        echo "  CARLA_REUSE=1 and :2000 open — reusing existing Carla (may be stale)."
+        return 0
+    fi
+    if pgrep -f CarlaUE4 >/dev/null 2>&1; then
+        echo "  Stopping existing Carla for a deterministic restart..."
+        pkill -9 -f CarlaUE4 2>/dev/null
+        fuser -k 2000/tcp 2>/dev/null || true
+        for i in $(seq 1 15); do
+            pgrep -f CarlaUE4 >/dev/null 2>&1 || break
+            sleep 1
+        done
+    fi
     nohup env -u DISPLAY bash "$CARLA_BIN" -RenderOffScreen -quality-level=Low -nosound \
         > "${PROJECT_ROOT}/logs/carla.log" 2>&1 &
     echo -n "  Waiting for Carla on port 2000... "
