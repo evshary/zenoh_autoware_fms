@@ -1,5 +1,5 @@
 import asyncio
-import math
+import json
 import os
 
 import cv2
@@ -17,14 +17,34 @@ MJPEG_HOST = '0.0.0.0'
 MJPEG_PORT = 5000
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=['*'])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 conf = zenoh.Config.from_file('config.json5')
 session = zenoh.open(conf)
 use_bridge_ros2dds = os.environ.get('USE_BRIDGE_ROS2DDS') == 'True'
-manual_controller = None
 mjpeg_server = None
 pose_service = PoseServer(session, use_bridge_ros2dds)
+
+# ── Zenoh intent publisher (browser → remote_control via Zenoh) ──
+_intent_pub = session.declare_publisher('manual_control/intent')
+
+# ── Zenoh telemetry subscriber (remote_control → browser via Zenoh) ──
+_last_telemetry = {}
+
+def _on_telemetry(sample):
+    global _last_telemetry
+    try:
+        _last_telemetry = json.loads(sample.payload.to_bytes().decode('utf-8'))
+    except Exception:
+        pass
+
+_telemetry_sub = session.declare_subscriber('manual_control/telemetry', _on_telemetry)
 
 
 @app.get('/')
@@ -37,6 +57,19 @@ async def manage_list_autoware():
     return list_autoware(session, use_bridge_ros2dds)
 
 
+@app.get('/zenoh/has-subscriber')
+async def zenoh_has_subscriber(key: str):
+    # Probes the Zenoh routing graph for any subscriber matching `key`.
+    # Used by the frontend to detect bridge-side capabilities (e.g. whether
+    # zenoh_carla_bridge was built with the `initialpose` cargo feature) —
+    # subscription presence IS the capability, no extra contract needed.
+    pub = session.declare_publisher(key)
+    try:
+        return {'matching': bool(pub.matching_status.matching)}
+    finally:
+        pub.undeclare()
+
+
 @app.get('/status/{scope}')
 async def manage_status_autoware(scope):
     return {'cpu': get_cpu_status(session, scope, use_bridge_ros2dds), 'vehicle': get_vehicle_status(session, scope, use_bridge_ros2dds)}
@@ -46,80 +79,65 @@ async def manage_status_autoware(scope):
 async def handle_ws(websocket: WebSocket):
     await websocket.accept()
     global mjpeg_server
-
     try:
         while True:
             if mjpeg_server is None or mjpeg_server.camera_image is None:
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
             else:
-                # Encode the frame as JPEG
                 _, buffer = cv2.imencode('.jpg', mjpeg_server.camera_image)
-                frame_bytes = buffer.tobytes()
-                await websocket.send_bytes(frame_bytes)
+                await websocket.send_bytes(buffer.tobytes())
                 await asyncio.sleep(0.1)
     except WebSocketDisconnect:
         pass
 
 
+@app.websocket('/telemetry/stream')
+async def telemetry_stream(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            await websocket.send_json(_last_telemetry)
+            await asyncio.sleep(0.1)  # 10Hz
+    except WebSocketDisconnect:
+        pass
+
+
 @app.get('/teleop/startup')
-async def manage_teleop_startup(scope):
-    global manual_controller, mjpeg_server, mjpeg_server_thread
-    if manual_controller is not None:
-        manual_controller.stop_teleop()
-    manual_controller = ManualController(session, scope, use_bridge_ros2dds)
+async def manage_teleop_startup(scope: str = 'v1'):
+    """Initialize gate mode + camera. Control goes through Zenoh intent to remote_control."""
+    global mjpeg_server
+    # ManualController only sets EXTERNAL gate mode + change_to_remote;
+    # the C++ remote_control node owns the live control loop.
+    mc = ManualController(session, scope, use_bridge_ros2dds)
+    mc.stop_teleop()
 
     if mjpeg_server is not None:
         mjpeg_server.change_vehicle(scope)
     else:
         mjpeg_server = MJPEG_server(session, scope, use_bridge_ros2dds)
     return {
-        'text': f'Startup manual control on {scope}.',
+        'text': f'Startup teleop on {scope}. Control via Zenoh intent.',
         'mjpeg_host': 'localhost' if MJPEG_HOST == '0.0.0.0' else MJPEG_HOST,
         'mjpeg_port': MJPEG_PORT,
     }
 
 
-@app.get('/teleop/gear')
-async def manage_teleop_gear(scope, gear):
-    global manual_controller
-    if manual_controller is not None:
-        manual_controller.pub_gear(gear)
-        return f'Set gear {gear} to {scope}.'
-    else:
-        return 'Please startup the teleop first'
+# ── WebSocket: browser intent → Zenoh (manual_control/intent) ──
 
-
-@app.get('/teleop/velocity')
-async def manage_teleop_speed(scope, velocity):
-    global manual_controller
-    if manual_controller is not None:
-        manual_controller.update_control_command(float(velocity) * 1000 / 3600, None)
-        return f'Set speed {velocity} to {scope}.'
-    else:
-        return 'Please startup the teleop first'
-
-
-@app.get('/teleop/turn')
-async def manage_teleop_turn(scope, angle):
-    global manual_controller
-    if manual_controller is not None:
-        manual_controller.update_control_command(None, float(angle) * math.pi / 180)
-        return f'Set steering angle {angle}.'
-    else:
-        return 'Please startup the teleop first'
-
-
-@app.get('/teleop/status')
-async def manage_teleop_status():
-    global manual_controller
-    if manual_controller is not None:
-        return {
-            'velocity': round(manual_controller.current_velocity * 3600 / 1000, 2),
-            'gear': manual_controller.current_gear,
-            'steering': manual_controller.current_steer * 180 / math.pi,
-        }
-    else:
-        return {'velocity': '---', 'gear': '---', 'steering': '---'}
+@app.websocket('/teleop/intent/ws')
+async def handle_intent_ws(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            _intent_pub.put(data)
+    except WebSocketDisconnect:
+        # Safety: send reset intent so watchdog triggers safe stop
+        try:
+            reset = {'w': False, 's': False, 'a': False, 'd': False, 'space': False, 'client_id': ''}
+            _intent_pub.put(json.dumps(reset))
+        except Exception:
+            pass
 
 
 @app.get('/map/list')
