@@ -16,21 +16,27 @@ zenoh-bridge-ros2dds -) Autoware AD API: control commands
 
 ### Basic test
 
-- Install prerequisite
+The whole FMS dev stack — Carla simulator, ROS↔Zenoh bridge, Autoware, the FMS API, and the frontend — is driven by three `just` recipes. The backend defaults to Carla; override it with `BACKEND=<name>` (see [`backends/README.md`](backends/README.md)).
+
+| Command | When to run | Effect |
+| :------ | :---------- | :----- |
+| `just setup` | Once, on a fresh checkout | Installs host prerequisites and builds everything the stack needs — Docker images, the Rust sim↔ROS bridge, the Autoware ROS workspace, the map and perception models (several GB, slow). Idempotent: re-running skips finished steps. |
+| `just up` | Every session | Starts the full stack — simulator, bridge, Autoware, teleop node, FMS API + frontend — and waits until the API (`:8000`) and frontend (`:3000`) answer. Then open <http://localhost:3000> to drive. |
+| `just down` | When finished | Stops everything `just up` started (FMS services, backend containers, simulator) and frees their ports. Deletes no files. |
 
 ```shell
-./prerequisite.sh
+just setup   # one-time setup (slow; downloads several GB)
+just up      # start the stack, then open http://localhost:3000
+just down    # stop the stack
 ```
 
-- Run Web Server & API Server
+Lower-level recipes, for when you run the backend yourself:
 
-```shell
-# Run with rmw_zenoh (without zenoh-bridge-ros2dds)
-just run_rmw_zenoh
-
-# Or run with zenoh-bridge-ros2dds
-just run_ros2dds
-```
+| Command | Effect |
+| :------ | :----- |
+| `just run_rmw_zenoh` | Run only the FMS API + frontend, talking to Autoware over `rmw_zenoh` (no `zenoh-bridge-ros2dds`). |
+| `just run_ros2dds` | Run only the FMS API + frontend, over the `zenoh-bridge-ros2dds` path. |
+| `just clean` | Delete Python build artifacts (`__pycache__`, `.venv`). Does **not** stop a running stack — use `just down` for that. |
 
 - You can use [the environment](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_fms_with_bridge_ros2dds) to test FMS
   - Remember to change the environment `FMS_CONNECTION`, which means FMS IP.

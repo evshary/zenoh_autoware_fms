@@ -4,13 +4,13 @@ Wraps Carla 0.9.14 + a sibling clone of `Shiritai/autoware_carla_launch`.
 This is the default; running with no `BACKEND` set picks it.
 
 ```bash
-bash prepare_env.sh                 # carla
-BACKEND=carla bash prepare_env.sh   # explicit
+just up                 # carla (default)
+BACKEND=carla just up   # explicit
 ```
 
-This file covers the one-time prereqs that bootstrap can't do for you.
+This file covers the one-time prereqs that `just setup` can't do for you.
 
-## After bootstrap
+## After setup
 
 - `${WORKSPACE}/autoware_carla_launch/`
   - `install/setup.bash` — colcon-built Autoware workspace
@@ -29,7 +29,7 @@ Disk: ~10 GB build artifacts + ~4 GB Carla.
 
 ## Layout
 
-```
+```text
 <workspace>/
 ├── zenoh_autoware_fms/    ← this repo (PROJECT_ROOT)
 ├── autoware_carla_launch/ ← Shiritai/autoware_carla_launch sibling clone
@@ -43,24 +43,24 @@ Sibling paths are hard-coded; override via env vars:
 
 ## Prereqs
 
-Bootstrap is now zero-touch — it auto-clones `autoware_carla_launch`,
-builds the two upstream Docker images, and (optionally) downloads the
-Carla binary. **You only need a host with the orchestrator's tools and
-disk for the artifacts.**
+`just setup` is zero-touch — it auto-clones `autoware_carla_launch`, builds
+the two upstream Docker images, and (optionally) downloads the Carla
+binary. **You only need a host with the tools below and disk for the
+artifacts.**
 
 | Need | Detail |
 |---|---|
-| Host tools | `docker`, `git`, `uv`, `node`, `npm`, `just`. `bootstrap.sh` checks this list and bails if any is missing. |
+| Host tools | `docker`, `git`, `uv`, `node`, `npm`, `just`. `just setup` checks this list and bails if any is missing. |
 | Disk | ~14 GB (autoware_carla_launch tree + 2 images + perception weights) — plus ~4 GB if Carla is auto-downloaded. |
 | Network | ~6 GB pull (images, perception models). Add ~4 GB if `CARLA_AUTODOWNLOAD=1`. |
 
-## Bootstrap
+## Setup
 
 ```bash
 cd zenoh_autoware_fms
-bash bootstrap.sh
+just setup
 # default: Carla binary stays manual; pass CARLA_AUTODOWNLOAD=1 to grab it too
-CARLA_AUTODOWNLOAD=1 bash bootstrap.sh
+CARLA_AUTODOWNLOAD=1 just setup
 ```
 
 What it does (idempotent — re-runs skip done work):
@@ -86,27 +86,27 @@ First run on a fresh host: 30–60 min. Re-runs: under a minute (everything skip
 
 If you'd rather position the Carla binary yourself, drop the extracted
 tree at `${PROJECT_ROOT}/../carla-0.9.14/` (override with `CARLA_BIN` env
-var) before or after bootstrap — the binary is only consumed by
-`prepare_env.sh::backend_start_sim`.
+var) before or after `just setup` — the binary is only consumed by
+`just up` (`backend_start_sim`).
 
 ## Run
 
 ```bash
-bash prepare_env.sh
+just up
 # http://localhost:3000
-bash shutdown_env.sh
+just down
 ```
 
 ## Troubleshooting
 
 ### `Carla binary not found at /workspace/carla-0.9.14/CarlaUE4.sh`
 
-Step 2 not done. The script warns and skips Carla startup; Autoware-only
-flows still work, but you can't drive without Carla.
+The Carla binary step was not done. `just up` warns and skips Carla
+startup; Autoware-only flows still work, but you can't drive without Carla.
 
 ### `Docker image missing: zenoh-carla-bridge-1.5.0`
 
-Step 3 not done. Bootstrap can't proceed.
+The image build step was not done. `just setup` can't proceed.
 
 ### Carla starts but `port 2000 ... TIMEOUT`
 

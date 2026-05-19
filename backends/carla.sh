@@ -2,13 +2,13 @@
 #
 # backends/carla.sh — Carla 0.9.14 + evshary/autoware_carla_launch backend
 #
-# Implements the contract in backends/README.md. Sourced by the orchestrator
-# subcommands (dev.sh up / down / bootstrap) which provide the
+# Implements the contract in backends/README.md. Sourced by the justfile
+# orchestration recipes (just up / down / setup) which provide the
 # `msg`, `warn`, `die`, `have` helpers.
 #
 # All Carla-specific paths, container names, image names, and lifecycle
 # choices live in this single file. Adding a new backend means writing a
-# parallel <name>.sh — no dev.sh changes needed.
+# parallel <name>.sh — no justfile changes needed.
 
 # ── Configuration ───────────────────────────────────────────
 
@@ -54,16 +54,16 @@ _carla_run() {
 
 backend_check_runtime_prereqs() {
     [ -d "$BACKEND_ROOT" ] || die "missing autoware_carla_launch sibling at $BACKEND_ROOT
-  run ./dev.sh bootstrap first; see backends/carla.md"
+  run \`just setup\` first; see backends/carla.md"
     [ -f "$BACKEND_ROOT/install/setup.bash" ] \
-        || die "Autoware not built (no install/setup.bash) — run ./dev.sh bootstrap"
+        || die "Autoware not built (no install/setup.bash) — run \`just setup\`"
     [ -x "$BACKEND_ROOT/external/zenoh_carla_bridge/target/release/zenoh_carla_bridge" ] \
-        || die "Carla bridge binary not built — run ./dev.sh bootstrap"
+        || die "Carla bridge binary not built — run \`just setup\`"
     docker image inspect "$_CARLA_BRIDGE_IMAGE" >/dev/null 2>&1 \
         || die "Docker image missing: $_CARLA_BRIDGE_IMAGE
   see backends/carla.md for how to build via autoware_carla_launch's container/ scripts"
     docker image inspect "$_FMS_AUTOWARE_IMAGE" >/dev/null 2>&1 \
-        || die "Docker image missing: $_FMS_AUTOWARE_IMAGE — run ./dev.sh bootstrap"
+        || die "Docker image missing: $_FMS_AUTOWARE_IMAGE — run \`just setup\`"
     # Missing Carla binary is non-fatal; backend_start_sim will skip with a warn.
 }
 
@@ -72,7 +72,7 @@ backend_check_bootstrap_prereqs() {
     # piece we don't auto-install by default is the Carla binary (~4 GB);
     # opt-in via CARLA_AUTODOWNLOAD=1.
     if [ ! -f "$CARLA_BIN" ] && [ "${CARLA_AUTODOWNLOAD:-0}" != "1" ]; then
-        warn "Carla binary not at $CARLA_BIN — dev.sh up will skip sim startup.
+        warn "Carla binary not at $CARLA_BIN — \`just up\` will skip sim startup.
   Set CARLA_AUTODOWNLOAD=1 to auto-download (~4 GB), or place an extracted
   CARLA_0.9.14 tree at $(dirname "$CARLA_BIN")/. See backends/carla.md."
     fi
@@ -114,14 +114,14 @@ backend_export_runtime_flags() {
 # connects to X over SSH X11 forwarding even with -RenderOffScreen,
 # blocking the main thread on do_poll().
 backend_start_sim() {
-    local i  # see dev.sh::run_steps (dynamic scoping)
+    local i  # see run_steps in the justfile (dynamic scoping)
     if [ ! -f "$CARLA_BIN" ]; then
         warn "Carla binary not at $CARLA_BIN; skipping sim startup"
         return 0
     fi
     # A long-lived Carla degrades (5s RPC timeouts, stale actors) and then
     # silently breaks the engage handshake or spawns no ego vehicle, so
-    # prepare_env defaults to a deterministic restart: kill any running
+    # `just up` defaults to a deterministic restart: kill any running
     # Carla and start a known-good instance. Set CARLA_REUSE=1 to keep an
     # existing instance for fast iteration when it is known healthy.
     if [ "${CARLA_REUSE:-0}" = "1" ] && nc -z localhost 2000 2>/dev/null; then
@@ -239,7 +239,7 @@ backend_stop() {
         stopped_any=1
     fi
     # Carla & bridge port cleanup. FMS ports (3000, 8000) are owned by the
-    # orchestrator and cleaned up there.
+    # `just down` recipe and cleaned up there.
     fuser -k 2000/tcp 7447/tcp 7887/tcp 8080/tcp 2>/dev/null || true
     return 0
 }
