@@ -1,6 +1,6 @@
 # Carla Backend
 
-Wraps Carla 0.9.14 + a sibling clone of `Shiritai/autoware_carla_launch`.
+Wraps Carla 0.9.14 + a sibling clone of `evshary/autoware_carla_launch`.
 This is the default; running with no `BACKEND` set picks it.
 
 ```bash
@@ -32,7 +32,7 @@ Disk: ~10 GB build artifacts + ~4 GB Carla.
 ```text
 <workspace>/
 ├── zenoh_autoware_fms/    ← this repo (PROJECT_ROOT)
-├── autoware_carla_launch/ ← Shiritai/autoware_carla_launch sibling clone
+├── autoware_carla_launch/ ← evshary/autoware_carla_launch sibling clone
 └── carla-0.9.14/          ← Carla binary, you provide
 ```
 
