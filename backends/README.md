@@ -96,7 +96,7 @@ cleanup_previous       backend_stop + pkill leftovers
 start_simulator        backend_start_sim + backend_seed_custom_configs
 backend_start_bridge
 backend_start_autoware
-start_manual_control   colcon build + ros2 run remote_control
+start_manual_control   colcon build + ros2 run zenoh_control
 start_fms_services     backend_seed_frontend_assets
                        backend_export_runtime_flags
                        just run (under setsid + nohup; PG → logs/just.pid)

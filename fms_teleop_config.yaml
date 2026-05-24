@@ -1,0 +1,53 @@
+/ManualControl:
+  ros__parameters:
+    # Operation mode this operator commands: "local" or "remote". STOP is the
+    # implicit idle/safe state; entering the drive mode self-engages.
+    operator_mode: remote
+
+    # zenoh_control only
+    vehicle: v1
+    arrival_timeout_ms: 500.0
+    zenoh_config: ""           # zenoh config json5 path; empty = default
+
+    init_pose:
+      presets:
+        names: ["origin", "intersection", "roadside"]
+        origin: [1.15, -1.18, 0.3, -2.383]
+        intersection: [92.17, -45.08, 0.3, 1.5708]
+        roadside: [288.24, -55.84, 0.5, 0.0]
+
+    # Active drive modes, in cycle order. "stop" is required — it is the
+    # initial and emergency mode.
+    modes: ["stop", "physics", "cruise"]
+
+    # Shared control loop
+    control_rate_hz: 60.0
+    shift_stop_tolerance: 0.05    # m/s — speed below which a shift proceeds
+    shift_brake_accel: -10.0      # m/s^2 — override accel while shifting
+
+    # PhysicsDriveMode
+    physics:
+      max_speed: 27.78            # m/s (100 km/h)
+      max_steer: 0.6              # rad
+      steer_rate: 0.8             # rad/s while a steer key is held
+      steer_decay: 1.0            # rad/s auto-center on release
+      steer_deadzone: 0.01        # rad
+      accel_max: 3.5              # m/s^2 at full throttle
+      brake_max: 5.0              # m/s^2 at full brake
+      coast_decel: 2.0            # m/s^2 with no input
+      max_vel_offset: 3.0         # m/s — setpoint anti-windup ceiling vs real
+
+    # CruiseDriveMode
+    cruise:
+      max_speed: 27.78
+      steer_rate: 0.3
+      steer_limit: 0.6
+      vel_inc_hold_kph_s: 5.0     # km/h per second when holding throttle
+      vel_dec_hold_kph_s: 10.0    # km/h per second when holding brake
+      accel_p_gain: 3.0
+      max_accel: 5.0
+      min_accel: -10.0
+
+    # StopDriveMode
+    stop:
+      brake_accel: -10.0
