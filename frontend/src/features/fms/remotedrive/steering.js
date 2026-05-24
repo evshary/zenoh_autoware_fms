@@ -58,7 +58,7 @@ const SteeringWheel = ({ rotation, onRotationChange }) => {
       style={{ cursor: "grab" }}
     >
       <img
-        className="h-40"
+        className="w-full h-full max-w-[10rem] max-h-[10rem] aspect-square object-contain mx-auto"
         src={require('./steering-wheel.png')}
         alt="Steering Wheel"
         style={{
