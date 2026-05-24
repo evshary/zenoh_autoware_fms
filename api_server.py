@@ -1,5 +1,5 @@
 import asyncio
-import math
+import json
 import os
 
 import cv2
@@ -11,20 +11,36 @@ from zenoh_app.camera_autoware import MJPEG_server
 from zenoh_app.list_autoware import list_autoware
 from zenoh_app.pose_service import PoseServer
 from zenoh_app.status_autoware import get_cpu_status, get_vehicle_status
-from zenoh_app.teleop_autoware import ManualController
 
 MJPEG_HOST = '0.0.0.0'
 MJPEG_PORT = 5000
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=['*'])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 conf = zenoh.Config.from_file('config.json5')
 session = zenoh.open(conf)
 use_bridge_ros2dds = os.environ.get('USE_BRIDGE_ROS2DDS') == 'True'
-manual_controller = None
 mjpeg_server = None
 pose_service = PoseServer(session, use_bridge_ros2dds)
+
+_intent_pub = session.declare_publisher('manual_control/v1/intent')
+
+_last_telemetry = {}
+
+def _on_telemetry(sample):
+    global _last_telemetry
+    try:
+        _last_telemetry = json.loads(sample.payload.to_bytes().decode('utf-8'))
+    except Exception:
+        pass
+
+_telemetry_sub = session.declare_subscriber('manual_control/v1/telemetry', _on_telemetry)
 
 
 @app.get('/')
@@ -35,6 +51,16 @@ async def root():
 @app.get('/list')
 async def manage_list_autoware():
     return list_autoware(session, use_bridge_ros2dds)
+
+
+@app.get('/zenoh/has-subscriber')
+async def zenoh_has_subscriber(key: str):
+    # True if any subscriber currently matches `key`.
+    pub = session.declare_publisher(key)
+    try:
+        return {'matching': bool(pub.matching_status.matching)}
+    finally:
+        pub.undeclare()
 
 
 @app.get('/status/{scope}')
@@ -61,13 +87,21 @@ async def handle_ws(websocket: WebSocket):
         pass
 
 
-@app.get('/teleop/startup')
-async def manage_teleop_startup(scope):
-    global manual_controller, mjpeg_server, mjpeg_server_thread
-    if manual_controller is not None:
-        manual_controller.stop_teleop()
-    manual_controller = ManualController(session, scope, use_bridge_ros2dds)
+@app.websocket('/telemetry/stream')
+async def telemetry_stream(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            await websocket.send_json(_last_telemetry)
+            await asyncio.sleep(0.1)  # 10Hz
+    except WebSocketDisconnect:
+        pass
 
+
+@app.get('/teleop/startup')
+async def manage_teleop_startup(scope: str = 'v1'):
+    """Start the camera stream; zenoh_control owns control and engage."""
+    global mjpeg_server
     if mjpeg_server is not None:
         mjpeg_server.change_vehicle(scope)
     else:
@@ -79,47 +113,15 @@ async def manage_teleop_startup(scope):
     }
 
 
-@app.get('/teleop/gear')
-async def manage_teleop_gear(scope, gear):
-    global manual_controller
-    if manual_controller is not None:
-        manual_controller.pub_gear(gear)
-        return f'Set gear {gear} to {scope}.'
-    else:
-        return 'Please startup the teleop first'
-
-
-@app.get('/teleop/velocity')
-async def manage_teleop_speed(scope, velocity):
-    global manual_controller
-    if manual_controller is not None:
-        manual_controller.update_control_command(float(velocity) * 1000 / 3600, None)
-        return f'Set speed {velocity} to {scope}.'
-    else:
-        return 'Please startup the teleop first'
-
-
-@app.get('/teleop/turn')
-async def manage_teleop_turn(scope, angle):
-    global manual_controller
-    if manual_controller is not None:
-        manual_controller.update_control_command(None, float(angle) * math.pi / 180)
-        return f'Set steering angle {angle}.'
-    else:
-        return 'Please startup the teleop first'
-
-
-@app.get('/teleop/status')
-async def manage_teleop_status():
-    global manual_controller
-    if manual_controller is not None:
-        return {
-            'velocity': round(manual_controller.current_velocity * 3600 / 1000, 2),
-            'gear': manual_controller.current_gear,
-            'steering': manual_controller.current_steer * 180 / math.pi,
-        }
-    else:
-        return {'velocity': '---', 'gear': '---', 'steering': '---'}
+@app.websocket('/teleop/intent/ws')
+async def handle_intent_ws(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            _intent_pub.put(data)
+    except WebSocketDisconnect:
+        pass
 
 
 @app.get('/map/list')
