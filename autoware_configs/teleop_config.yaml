@@ -1,0 +1,53 @@
+# FMS-side ros2 params for autoware_manual_control's remote_control node.
+# Mirrors external/autoware_manual_control/teleop_config.example.yaml as a
+# starting point; tuned for our Carla deployment. justfile passes this via
+# --params-file so the teleop submodule stays untouched at runtime.
+/ManualControl:
+  ros__parameters:
+    start_as_external: true
+
+    init_pose:
+      presets:
+        names: ["origin", "intersection"]
+        origin: [0.0, 0.0, 0.0, 0.0]
+        intersection: [15.0, 20.0, 0.0, 1.57]
+
+    # Shared control loop
+    control_rate_hz: 60.0
+    shift_stop_tolerance: 0.05    # m/s — speed below which a shift proceeds
+    shift_brake_accel: -10.0      # m/s^2 — override accel while shifting
+
+    # PhysicsDriveMode
+    physics:
+      max_speed: 27.78            # m/s (100 km/h)
+      max_steer: 0.6              # rad
+      steer_rate: 0.8             # rad/s while a steer key is held
+      steer_decay: 1.0            # rad/s auto-center on release
+      steer_deadzone: 0.01        # rad
+      accel_max: 3.5              # m/s^2 at full throttle
+      brake_max: 5.0              # m/s^2 at full brake
+      coast_decel: 2.0            # m/s^2 with no input
+      max_vel_offset: 0.5         # m/s — tight setpoint headroom; converter is
+                                  # feed-forward and Carla caps near 50 km/h at
+                                  # max_throttle=1.0, so a small headroom is
+                                  # enough to express operator intent.
+
+    # CruiseDriveMode
+    cruise:
+      max_speed: 27.78
+      steer_rate: 0.3
+      steer_limit: 0.6
+      vel_inc_hold_kph_s: 5.0     # km/h per second when holding throttle
+      vel_dec_hold_kph_s: 10.0    # km/h per second when holding brake
+      accel_p_gain: 3.0
+      max_accel: 5.0
+      min_accel: -10.0
+
+    # StopDriveMode
+    stop:
+      brake_accel: -10.0
+
+    # Remote (Zenoh) entry only — the keyboard entry ignores these.
+    vehicle: "v1"
+    arrival_timeout_ms: 500.0
+    zenoh_config: ""

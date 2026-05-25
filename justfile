@@ -170,12 +170,11 @@ up:
             msg "  manual_control submodule not present; skipping (FMS UI will load but keyboard intent has no listener)"
             return 0
         fi
-        local cfg="${mc_dir}/teleop_config.yaml"
-        local example="${cfg%.yaml}.example.yaml"
-        if [ ! -f "$cfg" ] && [ -f "$example" ]; then
-            msg "  Seeding teleop_config.yaml from .example (first run)"
-            cp "$example" "$cfg"
-        fi
+        # FMS owns the runtime params; teleop ships .example.yaml as reference
+        # only. autoware_configs/teleop_config.yaml is our deployment file —
+        # complete, tracked, and the single --params-file source.
+        local cfg="${PROJECT_ROOT}/autoware_configs/teleop_config.yaml"
+        [ -f "$cfg" ] || die "missing $cfg (FMS-owned teleop params)"
 
         backend_exec_in_ros "cd '${mc_dir}' && \
             colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" \
@@ -184,7 +183,7 @@ up:
         msg "  Starting remote_control node..."
         backend_exec_in_ros -d "source '${mc_dir}/install/setup.bash' && \
             ros2 run autoware_manual_control remote_control --ros-args \
-                --params-file '${cfg}' -p start_as_external:=true \
+                --params-file '${cfg}' \
             > /tmp/remote_control.log 2>&1"
         sleep 5  # let the C++ node register subscribers before downstream services connect
     }
