@@ -5,19 +5,12 @@
 # Implements the contract in backends/README.md. Sourced by the justfile
 # orchestration recipes (just up / down / setup) which provide the
 # `msg`, `warn`, `die`, `have` helpers.
-#
-# All Carla-specific paths, container names, image names, and lifecycle
-# choices live in this single file. Adding a new backend means writing a
-# parallel <name>.sh — no justfile changes needed.
 
 # ── Configuration ───────────────────────────────────────────
 
 BACKEND_NAME="carla"
 
-# Sibling-clone of evshary/autoware_carla_launch.
 BACKEND_ROOT="${BACKEND_ROOT:-${PROJECT_ROOT}/../autoware_carla_launch}"
-
-# Carla 0.9.14 binary.
 CARLA_BIN="${CARLA_BIN:-${PROJECT_ROOT}/../carla-0.9.14/CarlaUE4.sh}"
 
 # Source for auto-cloning autoware_carla_launch when BACKEND_ROOT is
@@ -26,22 +19,17 @@ CARLA_BIN="${CARLA_BIN:-${PROJECT_ROOT}/../carla-0.9.14/CarlaUE4.sh}"
 CARLA_LAUNCH_URL="${CARLA_LAUNCH_URL:-https://github.com/evshary/autoware_carla_launch.git}"
 CARLA_LAUNCH_BRANCH="${CARLA_LAUNCH_BRANCH:-feat/fms-teleop}"
 
-# Container names FMS will docker-exec into.
 BACKEND_BRIDGE_CONTAINER="zenoh_bridge"
 BACKEND_AUTOWARE_CONTAINER="zenoh_autoware"
 
-# Two upstream images + the FMS-built derivative.
 _CARLA_BRIDGE_IMAGE="zenoh-carla-bridge-1.5.0"
 _AUTOWARE_RAW_IMAGE="zenoh-autoware-1.5.0"
-_FMS_AUTOWARE_IMAGE="zenoh-fms-engine:latest"
 
 # Inside-container path where rmw_zenoh's vendor prefix lives. autoware_manual_control's
 # zenohcxx find_package() looks here at build time and at runtime.
 _ZENOH_VP_INCONTAINER="/root/autoware_carla_launch/rmw_zenoh_ws/install/zenoh_cpp_vendor/opt/zenoh_cpp_vendor"
 
-# Helper: run a one-shot command inside an image with the standard
-# Carla-bridge mount layout. Used by backend_bootstrap to avoid
-# repeating four lines of docker run boilerplate per build step.
+# Helper for one-shot commands in a Carla-bridge image (build steps).
 _carla_run() {
     local img="$1"; shift
     docker run --rm --network host --privileged --ipc host --ulimit memlock=-1 \
@@ -62,8 +50,9 @@ backend_check_runtime_prereqs() {
     docker image inspect "$_CARLA_BRIDGE_IMAGE" >/dev/null 2>&1 \
         || die "Docker image missing: $_CARLA_BRIDGE_IMAGE
   see backends/carla.md for how to build via autoware_carla_launch's container/ scripts"
-    docker image inspect "$_FMS_AUTOWARE_IMAGE" >/dev/null 2>&1 \
-        || die "Docker image missing: $_FMS_AUTOWARE_IMAGE — run \`just setup\`"
+    docker image inspect "$_AUTOWARE_RAW_IMAGE" >/dev/null 2>&1 \
+        || die "Docker image missing: $_AUTOWARE_RAW_IMAGE
+  see backends/carla.md for how to build via autoware_carla_launch's container/ scripts"
     # Missing Carla binary is non-fatal; backend_start_sim will skip with a warn.
 }
 
@@ -153,9 +142,9 @@ backend_start_sim() {
     sleep 15
 }
 
-# Start sim ↔ ROS bridge container.
 backend_start_bridge() {
     [ -d "$BACKEND_ROOT" ] || { warn "skipping bridge: backend root missing"; return 0; }
+    docker rm -f "$BACKEND_BRIDGE_CONTAINER" >/dev/null 2>&1 || true
     docker run -d --name "$BACKEND_BRIDGE_CONTAINER" \
         --network host --privileged --ipc host --ulimit memlock=-1 \
         -v "${BACKEND_ROOT}:/root/autoware_carla_launch" \
@@ -170,12 +159,13 @@ backend_start_bridge() {
 # the same path inside the container so manual_control source paths match.
 backend_start_autoware() {
     [ -d "$BACKEND_ROOT" ] || { warn "skipping autoware: backend root missing"; return 0; }
+    docker rm -f "$BACKEND_AUTOWARE_CONTAINER" >/dev/null 2>&1 || true
     docker run -d --name "$BACKEND_AUTOWARE_CONTAINER" \
         --network host --privileged --ipc host --ulimit memlock=-1 \
         -v "${PROJECT_ROOT}:${PROJECT_ROOT}" \
         -v "${BACKEND_ROOT}:/root/autoware_carla_launch" \
         -w /root/autoware_carla_launch \
-        "$_FMS_AUTOWARE_IMAGE" \
+        "$_AUTOWARE_RAW_IMAGE" \
         bash -c 'source install/setup.bash && source env.sh && ./script/autoware_ros2dds/run-autoware.sh'
     echo "  Waiting 20s for Autoware stack..."
     sleep 20
@@ -228,7 +218,7 @@ backend_exec_in_ros() {
 backend_stop() {
     local stopped_any=0
     for c in "$BACKEND_AUTOWARE_CONTAINER" "$BACKEND_BRIDGE_CONTAINER"; do
-        if docker ps -q -f name="$c" 2>/dev/null | grep -q .; then
+        if docker ps -aq -f name="$c" 2>/dev/null | grep -q .; then
             echo "[backend:carla] Stopping container: $c"
             docker rm -f "$c" 2>/dev/null
             stopped_any=1

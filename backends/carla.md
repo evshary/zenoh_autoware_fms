@@ -12,18 +12,17 @@ This file covers the one-time prereqs that `just setup` can't do for you.
 
 ## After setup
 
-- `${WORKSPACE}/autoware_carla_launch/`
+- `<workspace>/autoware_carla_launch/`
   - `install/setup.bash` — colcon-built Autoware workspace
   - `external/zenoh_carla_bridge/target/release/zenoh_carla_bridge` — Rust bridge
   - `external/zenoh_carla_bridge/carla_agent/.venv/` — Python venv with `carla`
   - `carla_map/Town01/` — lanelet OSM + pointcloud PCD
   - `autoware_data/` — perception weights (~1.5 GB)
   - `rust/`, `poetry/`, `pyenv/` — toolchains
-- `${WORKSPACE}/carla-0.9.14/` — Carla binary
-- Three local Docker images:
+- `<workspace>/carla-0.9.14/` — Carla binary
+- Two local Docker images:
   - `zenoh-carla-bridge-1.5.0`
   - `zenoh-autoware-1.5.0`
-  - `zenoh-fms-engine:latest` (FMS-built from `zenoh_app/Dockerfile.fms`)
 
 Disk: ~10 GB build artifacts + ~4 GB Carla.
 
@@ -59,7 +58,6 @@ artifacts.**
 ```bash
 cd zenoh_autoware_fms
 just setup
-# default: Carla binary stays manual; pass CARLA_AUTODOWNLOAD=1 to grab it too
 CARLA_AUTODOWNLOAD=1 just setup
 ```
 
@@ -67,8 +65,7 @@ What it does (idempotent — re-runs skip done work):
 
 1. Check host tools (docker / git / uv / node / npm / just)
 2. FMS submodule init
-3. Build `zenoh-fms-engine` image
-4. **Backend bootstrap** (the heavy part):
+3. **Backend bootstrap** (the heavy part):
    - clone `autoware_carla_launch` sibling (if missing)
    - build `zenoh-carla-bridge-1.5.0` image (if missing) — ~20-40 min
    - build `zenoh-autoware-1.5.0` image (if missing) — ~20-40 min
@@ -78,9 +75,9 @@ What it does (idempotent — re-runs skip done work):
    - install poetry/pyenv + carla_agent venv
    - download Town01 lanelet map + perception weights
    - colcon build the Autoware ROS workspace
-5. Mirror lanelet to `frontend/public/`
-6. `uv sync`
-7. `npm install`
+4. Mirror lanelet to `frontend/public/`
+5. `uv sync`
+6. `npm install`
 
 First run on a fresh host: 30–60 min. Re-runs: under a minute (everything skips).
 
@@ -125,5 +122,3 @@ Carla took >40 s to come up. Usually one of:
   `REACT_APP_MAP_FILE_PATH`.
 - **Carla 0.9.14 only.** PythonAPI ABI shifted in 0.9.15+; the `carla`
   package pinned in `carla_agent`'s poetry venv is 0.9.14-specific.
-
-These belong to the Carla integration, not the backend abstraction.

@@ -107,7 +107,6 @@ setup:
     set -e
     export FMS_ROOT='{{justfile_directory()}}'
     {{_lib}}
-    IMG_FMS_ENGINE="zenoh-fms-engine:latest"
 
     run_prerequisite() {
         # Host packages + uv sync + node/npm + map — delegated to prerequisite.sh.
@@ -122,20 +121,11 @@ setup:
     init_submodules() {
         git -C "$PROJECT_ROOT" submodule update --init --recursive
     }
-    build_fms_image() {
-        [ -f "${PROJECT_ROOT}/zenoh_app/Dockerfile.fms" ] \
-            || die "zenoh_app/Dockerfile.fms missing — can't build $IMG_FMS_ENGINE"
-        skip_if_present "$IMG_FMS_ENGINE" \
-            "docker image inspect '$IMG_FMS_ENGINE'" \
-            "docker build -f '${PROJECT_ROOT}/zenoh_app/Dockerfile.fms' \
-                -t '$IMG_FMS_ENGINE' '${PROJECT_ROOT}'"
-    }
 
     STEPS=(
         "Host prerequisites (prerequisite.sh):run_prerequisite"
         "Host tooling check:check_host_tools"
         "Init FMS submodules:init_submodules"
-        "Build zenoh-fms-engine image:build_fms_image"
         "Backend artifacts (sim/bridge/Autoware):backend_bootstrap"
         "Mirror backend assets to frontend/public:backend_seed_frontend_assets"
     )
