@@ -14,17 +14,25 @@ zenoh-bridge-ros2dds -) Autoware AD API: control commands
 
 ## Usage
 
+### Quick start
+
+Carla simulator, sim↔ROS bridge, Autoware, FMS API, and the frontend in three commands. The backend defaults to Carla; override it with `BACKEND=<name>` (see [`backends/README.md`](backends/README.md)):
+
+```shell
+just setup   # one-time setup (slow; downloads several GB)
+just up      # start the stack, then open http://localhost:3000
+just down    # stop the stack
+```
+
+`just setup` is idempotent; `just clean` removes Python build artifacts (`__pycache__`, `.venv`) without stopping a running stack.
+
 ### Basic test
 
-- Install prerequisite
+If you've already brought up Carla + the sim↔ROS bridge + Autoware yourself (e.g. via [autoware_carla_launch](https://autoware-carla-launch.readthedocs.io/en/latest/scenarios/fms.html) by hand, or on real hardware), install host prereqs once and launch just the FMS layer over your existing transport:
 
 ```shell
 ./prerequisite.sh
-```
 
-- Run Web Server & API Server
-
-```shell
 # Run with rmw_zenoh (without zenoh-bridge-ros2dds)
 just run_rmw_zenoh
 
@@ -32,8 +40,7 @@ just run_rmw_zenoh
 just run_ros2dds
 ```
 
-- You can use [the environment](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_fms_with_bridge_ros2dds) to test FMS
-  - Remember to change the environment `FMS_CONNECTION`, which means FMS IP.
+- You can also use [this docker env](https://github.com/evshary/zenoh_demo_docker_env/tree/main/autoware_fms_with_bridge_ros2dds) to test FMS — set `FMS_CONNECTION` to the FMS host IP.
 
 ### Integration with Carla
 
