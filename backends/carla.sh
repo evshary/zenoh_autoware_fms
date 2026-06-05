@@ -224,7 +224,8 @@ backend_stop() {
             stopped_any=1
         fi
     done
-    if pkill -f CarlaUE4 2>/dev/null; then
+    # force-kill: a degraded Carla (up, RPC port dead) ignores SIGTERM
+    if pkill -9 -f CarlaUE4 2>/dev/null; then
         echo "[backend:carla] Stopped Carla."
         stopped_any=1
     fi

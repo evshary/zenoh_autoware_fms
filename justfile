@@ -236,10 +236,11 @@ down:
     pidfile="${PROJECT_ROOT}/logs/just.pid"
     msg "═══ Shutting down FMS (backend: ${BACKEND_NAME}) ═══"
 
-    # FMS service tree: kill the whole process group in one shot.
+    # Kill the FMS service group; skip a stale PGID equal to our own (self-kill).
     if [ -f "$pidfile" ]; then
         pgid=$(cat "$pidfile")
-        if kill -- -"$pgid" 2>/dev/null; then
+        own=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')
+        if [ -n "$pgid" ] && [ "$pgid" != "$own" ] && kill -- -"$pgid" 2>/dev/null; then
             msg "Stopped FMS service tree (PG $pgid)"
         fi
         rm -f "$pidfile"
