@@ -42,7 +42,7 @@ function TeleopPanel() {
         pressKey, releaseKey, triggerOneShot,
     } = useDriveInput();
 
-    const { cameraUrl, telemetry, clientId } = useRemoteDriveSession(
+    const { cameraUrl, telemetry } = useRemoteDriveSession(
         teleopScope, activeKeys, pendingActions
     );
 
@@ -50,10 +50,10 @@ function TeleopPanel() {
         if (telemetry.timestamp) {
             dispatch(updateLatency(Date.now() - telemetry.timestamp));
         }
-        if (telemetry.active_client_id !== undefined) {
-            dispatch(updateControlStatus(telemetry.active_client_id === clientId));
+        if (telemetry.watchdog_tripped !== undefined) {
+            dispatch(updateControlStatus(!telemetry.watchdog_tripped));
         }
-    }, [telemetry, clientId, dispatch]);
+    }, [telemetry, dispatch]);
 
     const KeyBadge = ({ keyName, label, width = "w-10", onClick, onPressStart, onPressEnd }) => {
         const isPressed = pressedKeys.includes(keyName) || flashedKey === keyName;

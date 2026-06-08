@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function useRemoteDriveSession(teleopScope, activeKeys, pendingActions) {
     const [cameraUrl, setCameraUrl] = useState('');
     const [telemetry, setTelemetry] = useState({});
-    // crypto.randomUUID is undefined outside secure contexts (plain http on a LAN IP) — fall back.
-    const clientIdRef = useRef(
-        crypto.randomUUID?.() ?? `c-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    );
 
     useEffect(() => {
         if (teleopScope === 'None') return;
@@ -36,7 +32,6 @@ export default function useRemoteDriveSession(teleopScope, activeKeys, pendingAc
             if (a.cmd === 'reset_pose')  { counters.reset_pose++;  a.cmd = null; }
 
             const intent = {
-                client_id: clientIdRef.current,
                 throttle: (k.w && !k.s) ? 1.0 : 0.0,
                 brake:    k.s           ? 1.0 : 0.0,
                 steer:    (k.a && !k.d) ? 1 : (k.d && !k.a) ? -1 : 0,
@@ -66,5 +61,5 @@ export default function useRemoteDriveSession(teleopScope, activeKeys, pendingAc
         };
     }, [teleopScope]);
 
-    return { cameraUrl, telemetry, clientId: clientIdRef.current };
+    return { cameraUrl, telemetry };
 }

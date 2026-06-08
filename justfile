@@ -160,7 +160,7 @@ up:
             msg "  manual_control submodule not present; skipping (FMS UI will load but keyboard intent has no listener)"
             return 0
         fi
-        # Prefer the FMS-owned config (Town01 presets, vehicle, modes) over the
+        # Prefer the FMS-owned config (Town01 presets, scope, modes) over the
         # submodule seed: $FMS_TELEOP_CONFIG -> fms_teleop_config.yaml -> seed.
         local cfg="${FMS_TELEOP_CONFIG:-${PROJECT_ROOT}/fms_teleop_config.yaml}"
         if [ ! -f "$cfg" ]; then

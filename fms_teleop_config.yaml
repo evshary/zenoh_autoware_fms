@@ -5,7 +5,7 @@
     operator_mode: remote
 
     # zenoh_control only
-    vehicle: v1
+    scope: v1
     arrival_timeout_ms: 500.0
     zenoh_config: ""           # zenoh config json5 path; empty = default
 
