@@ -86,5 +86,7 @@ Below is the list of topics and services currently in use in the FMS:
 
 ## Maintainers
 
-- [ChenYing Kuo](https://github.com/evshary)
-- [Leann Hsu](https://github.com/hsule)
+| Avatar | GitHub ID | Name |
+| --- | --- | --- |
+| <a href="https://github.com/evshary"><img src="https://github.com/evshary.png" width="48" alt="evshary" /></a> | [@evshary](https://github.com/evshary) | ChenYing Kuo |
+| <a href="https://github.com/hsule"><img src="https://github.com/hsule.png" width="48" alt="hsule" /></a> | [@hsule](https://github.com/hsule) | Leann Hsu |
