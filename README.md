@@ -83,3 +83,8 @@ Below is the list of topics and services currently in use in the FMS:
 | Pose     | /api/routing/clear_route                 | autoware_adapi_v1_msgs/srv/ClearRoute          | Clear the currently set route           |
 | Pose     | /api/routing/set_route_points            | autoware_adapi_v1_msgs/srv/SetRoutePoints      | Define the route goal and waypoints     |
 | Teleop   | /api/operation_mode/change_to_remote     | autoware_adapi_v1_msgs/srv/ChangeOperationMode | Change the operation mode to remote     |
+
+## Maintainers
+
+- [ChenYing Kuo](https://github.com/evshary)
+- [Leann Hsu](https://github.com/hsule)
