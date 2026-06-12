@@ -160,22 +160,28 @@ up:
             msg "  manual_control submodule not present; skipping (FMS UI will load but keyboard intent has no listener)"
             return 0
         fi
-        local cfg="${mc_dir}/teleop_config.yaml"
-        local example="${cfg%.yaml}.example.yaml"
-        if [ ! -f "$cfg" ] && [ -f "$example" ]; then
-            msg "  Seeding teleop_config.yaml from .example (first run)"
-            cp "$example" "$cfg"
+        # Prefer the FMS-owned config (Town01 presets, scope, modes) over the
+        # submodule seed: $FMS_TELEOP_CONFIG -> fms_teleop_config.yaml -> seed.
+        local cfg="${FMS_TELEOP_CONFIG:-${PROJECT_ROOT}/fms_teleop_config.yaml}"
+        if [ ! -f "$cfg" ]; then
+            cfg="${mc_dir}/teleop_config.yaml"
+            local example="${cfg%.yaml}.example.yaml"
+            if [ ! -f "$cfg" ] && [ -f "$example" ]; then
+                msg "  Seeding teleop_config.yaml from .example (first run)"
+                cp "$example" "$cfg"
+            fi
         fi
 
         backend_exec_in_ros "cd '${mc_dir}' && \
-            colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" \
+            colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release \
+                -DTELEOP_WITH_KEYBOARD=OFF -DTELEOP_WITH_ZENOH=ON" \
             || warn "manual_control build failed (backend container may not have source mounted)"
 
-        msg "  Starting remote_control node..."
+        msg "  Starting zenoh_control node..."
         backend_exec_in_ros -d "source '${mc_dir}/install/setup.bash' && \
-            ros2 run autoware_manual_control remote_control --ros-args \
-                --params-file '${cfg}' -p start_as_external:=true \
-            > /tmp/remote_control.log 2>&1"
+            ros2 run autoware_manual_control zenoh_control --ros-args \
+                --params-file '${cfg}' \
+            > /tmp/zenoh_control.log 2>&1"
         sleep 5  # let the C++ node register subscribers before downstream services connect
     }
     start_fms_services() {
@@ -218,7 +224,7 @@ up:
     msg "  API:       http://localhost:8000"
     msg "  Backend:   ${BACKEND_NAME}"
     msg ""
-    msg "  Architecture: Frontend ⇄ ws ⇄ api_server ⇄ zenoh ⇄ remote_control ⇄ ROS ⇄ Autoware ⇄ ${BACKEND_NAME}"
+    msg "  Architecture: Frontend ⇄ ws ⇄ api_server ⇄ zenoh ⇄ zenoh_control ⇄ ROS ⇄ Autoware ⇄ ${BACKEND_NAME}"
     msg ""
     msg "  Run just down to stop."
 
@@ -230,10 +236,11 @@ down:
     pidfile="${PROJECT_ROOT}/logs/just.pid"
     msg "═══ Shutting down FMS (backend: ${BACKEND_NAME}) ═══"
 
-    # FMS service tree: kill the whole process group in one shot.
+    # Kill the FMS service group; skip a stale PGID equal to our own (self-kill).
     if [ -f "$pidfile" ]; then
         pgid=$(cat "$pidfile")
-        if kill -- -"$pgid" 2>/dev/null; then
+        own=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')
+        if [ -n "$pgid" ] && [ "$pgid" != "$own" ] && kill -- -"$pgid" 2>/dev/null; then
             msg "Stopped FMS service tree (PG $pgid)"
         fi
         rm -f "$pidfile"

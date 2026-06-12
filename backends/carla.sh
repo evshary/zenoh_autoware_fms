@@ -126,7 +126,7 @@ backend_start_sim() {
             sleep 1
         done
     fi
-    nohup env -u DISPLAY bash "$CARLA_BIN" -RenderOffScreen -quality-level=Low -nosound \
+    nohup env -u DISPLAY bash "$CARLA_BIN" -RenderOffScreen -nosound \
         > "${PROJECT_ROOT}/logs/carla.log" 2>&1 &
     echo -n "  Waiting for Carla on port 2000... "
     for i in $(seq 1 40); do
@@ -224,7 +224,8 @@ backend_stop() {
             stopped_any=1
         fi
     done
-    if pkill -f CarlaUE4 2>/dev/null; then
+    # force-kill: a degraded Carla (up, RPC port dead) ignores SIGTERM
+    if pkill -9 -f CarlaUE4 2>/dev/null; then
         echo "[backend:carla] Stopped Carla."
         stopped_any=1
     fi

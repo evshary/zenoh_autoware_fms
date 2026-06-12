@@ -1,178 +1,194 @@
-import { useEffect, useState, useRef, forwardRef } from "react"
+import { useRef, useEffect, forwardRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import TitleCard from "../../../components/Cards/TitleCard"
-import { startupTeleop, setGear, setVelocity, setTurn } from "./remoteDriveSlice"
+import { startupTeleop, updateLatency, updateControlStatus } from "./remoteDriveSlice"
 import { Refresh } from "../vehiclelist"
-import { StyleSelect, StyleTextArea } from "../common"
+import { getListContent } from "../vehiclelist/vehiclelistSlice"
 import { CamImageWithStatus } from "./cameraImg"
 import SteeringWheel from "./steering"
-import axios from 'axios'
+import useDriveInput from "./useDriveInput"
+import useRemoteDriveSession from "./useRemoteDriveSession"
 
-const VehicleSelect = forwardRef((props, ref) => {
-    return (
-        <select ref={ref} className="bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/2 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-            <option value="None">None</option>
-            {
-                props.state.map((element, idx) => {
-                    var V = JSON.parse(element)
-                    return (<option key={V.name} value={V.name}>{V.name}</option>)
-                })
-            }
-        </select>
-    )
-})
+const VehicleSelect = forwardRef((props, ref) => (
+    <select ref={ref} className="bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/2 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+        <option value="None">None</option>
+        {props.state.map((el) => { const V = JSON.parse(el); return <option key={V.name} value={V.name}>{V.name}</option>; })}
+    </select>
+));
 
+const VehicleSelectButton = ({ isLoading, refon, text }) => {
+    const dispatch = useDispatch();
+    if (isLoading) return <button className="btn px-6 btn-sm normal-case btn-primary"><span className="loading loading-spinner loading-sm" /></button>;
+    return <button className="btn px-6 btn-sm normal-case btn-info text-info-content"
+        onClick={() => dispatch(startupTeleop(refon.current?.value || "None"))}>{text}</button>;
+};
 
-const VehicleSelectButton = (props) => {
-    const dispatch = useDispatch()
-    if(props.isLoading){
-        return (
-            <div className="inline-block float-right">
-                <button className="btn px-6 btn-sm normal-case btn-primary">
-                    <svg aria-hidden="true" role="status" className="inline w-4 h-4 mr-3 text-white animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="#E5E7EB"/>
-                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentColor"/>
-                    </svg>
-                </button>
-            </div>
-        )
-    }
-    return(
-        <button 
-            className="btn px-6 btn-sm normal-case btn-info" 
-            onClick={() => {dispatch(startupTeleop((props.refon.current)?(props.refon.current.value):"None"))}}>{props.text}</button>
-    )
-}
-
-const TeleopButton = (props) => {
-    return(
-        <button 
-            className="btn px-6 btn-sm normal-case btn-info" 
-            onClick={() => {props.handleClick(props.scope, (props.refon.current)?(props.refon.current.value):"None")}}>{props.text}</button>
-    )
-}
-
-function TeleopPnael() {
+function TeleopPanel() {
     const scopeRef = useRef(null);
-    const gearRef = useRef(null);
-    const velocityRef = useRef(null);
-    const {list} = useSelector(state => state.list)
-    const refreshLoadinig = useSelector(state => state.list.isLoading)
-    const teleopScope = useSelector(state => state.teleop.teleopScope)
-    // const cameraUrl = useSelector(state => state.teleop.cameraUrl)
-    const teleopLoading = useSelector(state => state.teleop.isLoading)
-    const [teleopStatus, setTeleopStatus] = useState( () => {
-        return {
-            velocity: '---',
-            gear: '---',
-            steering: '---'
-        }
-    })
-    const [rotation, setRotation] = useState(0);
-    const [cameraUrl, setCameraUrl] = useState("");
-
-    const handleRotationChange = (newRotation) => {
-        setRotation(newRotation);
-    };
+    const dispatch = useDispatch();
+    const { list } = useSelector(s => s.list);
+    const refreshLoading = useSelector(s => s.list.isLoading);
+    const teleopScope = useSelector(s => s.teleop.teleopScope);
+    const teleopLoading = useSelector(s => s.teleop.isLoading);
+    const latency = useSelector(s => s.teleop.latency);
+    const isControlling = useSelector(s => s.teleop.isControlling);
 
     useEffect(() => {
-        /* Connect to web socket serever */
-        const ws = new WebSocket("ws://localhost:8000/video");
+        if (list.length === 0) dispatch(getListContent());
+    }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
-        /* Handle image sent by web socket */
-        ws.onmessage = (event) => {
-            // if (event.data instanceof Blob) {
-            // Convert the received data to a Blob
-            const blob = event.data;
-            // Create a data URL from the Blob
-            const url = URL.createObjectURL(blob);
-            // Update the state with the image source URL
-            setCameraUrl(url);
-            console.log(url)
-            // }
-        };
+    const {
+        activeKeys, pendingActions,
+        pressedKeys, flashedKey, rotation, setRotation,
+        pressKey, releaseKey, triggerOneShot,
+    } = useDriveInput();
 
-        /* Get the status of vehicle */
-        const getTeleopStatus = async () => {
-            if(teleopScope === 'None') return;
-            const response = await axios.get('/teleop/status', {});
-            let newStatus = Object.assign({}, {
-                velocity: response.data.velocity,
-                gear: response.data.gear,
-                steering: response.data.steering
-            })
-            setTeleopStatus(newStatus)
+    const { cameraUrl, telemetry } = useRemoteDriveSession(
+        teleopScope, activeKeys, pendingActions
+    );
+
+    useEffect(() => {
+        if (telemetry.timestamp) {
+            dispatch(updateLatency(Date.now() - telemetry.timestamp));
         }
-
-        /* Set the steering of vehicle */
-        const setTeleopTurn = async () => {
-            if(teleopScope === 'None') return;
-            await setTurn(teleopScope, (-1) * rotation)
+        if (telemetry.watchdog_tripped !== undefined) {
+            dispatch(updateControlStatus(!telemetry.watchdog_tripped));
         }
+    }, [telemetry, dispatch]);
 
-
-        /* Get status of vehicle every 1 sec after startup */
-        const get_status_interval = setInterval(getTeleopStatus, 1000)
-
-        /* Set steering angle to the vehicle every 1 sec after startup */
-        const set_steering_interval = setInterval(setTeleopTurn, 1000)
-
-        /* Clear the timer when unmount */
-        return () => {
-            clearInterval(get_status_interval)
-            clearInterval(set_steering_interval)
-            ws.close();
-        }
-
-    }, [teleopScope, rotation])
+    const KeyBadge = ({ keyName, label, width = "w-10", onClick, onPressStart, onPressEnd }) => {
+        const isPressed = pressedKeys.includes(keyName) || flashedKey === keyName;
+        const interactive = Boolean(onClick || onPressStart);
+        const pressHandlers = onPressStart
+            ? {
+                onMouseDown: (e) => { e.preventDefault(); onPressStart(); },
+                onMouseUp: () => onPressEnd && onPressEnd(),
+                onMouseLeave: () => onPressEnd && onPressEnd(),
+                onTouchStart: (e) => { e.preventDefault(); onPressStart(); },
+                onTouchEnd: (e) => { e.preventDefault(); onPressEnd && onPressEnd(); },
+            }
+            : onClick
+                ? { onClick: (e) => { e.preventDefault(); onClick(); } }
+                : {};
+        return (
+            <div className="flex flex-col items-center mx-1 my-1">
+                <kbd
+                    {...pressHandlers}
+                    className={`kbd ${width} transition-all duration-150 ease-out
+                        ${interactive ? 'cursor-pointer select-none hover:bg-base-300 active:scale-90' : ''}
+                        ${isPressed
+                            ? 'bg-primary text-primary-content border-primary scale-90 shadow-lg ring-2 ring-primary/40'
+                            : ''}`}
+                >
+                    {label || keyName.toUpperCase()}
+                </kbd>
+            </div>
+        );
+    };
 
     return (
-        <>
-            <TitleCard title={(teleopScope !== "None")?`Remote Driving on ${teleopScope}` : "Remote Driving"} TopSideButtons={<Refresh isLoading={refreshLoadinig}/>}>
-                <div className="grid grid-rows-4 grid-flow-col gap-4">
-                <CamImageWithStatus classname="row-span-4 col-span-10 bg-no-repeat bg-cover relative" bgUrl={cameraUrl} status={teleopStatus} />
+        <div className="w-full h-[calc(100vh-100px)] grid grid-cols-12 gap-4 bg-base-100 overflow-hidden">
+            {/* Camera Panel */}
+            <div className="col-span-8 lg:col-span-9 h-full relative rounded-2xl overflow-hidden shadow-2xl border border-base-300">
+                <CamImageWithStatus
+                    classname="w-full h-full bg-no-repeat bg-cover absolute inset-0"
+                    bgUrl={cameraUrl}
+                    telemetry={telemetry}
+                    latency={latency}
+                    isControlling={isControlling}
+                />
+                <div className="absolute top-4 right-4 z-10 flex items-center space-x-3 bg-base-100/80 backdrop-blur-md p-2 rounded-xl shadow-lg">
+                    {teleopScope !== "None" ?
+                        <span className="badge badge-primary font-bold">Driving: {teleopScope}</span> :
+                        <span className="badge badge-ghost font-bold">No Vehicle Selected</span>}
+                    <Refresh isLoading={refreshLoading} />
+                </div>
+            </div>
 
-                    <div className="row-span-1 col-span-1">
-                        <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Select a vehicle</label>
-                        <div className="flex">
-                            <VehicleSelect state={list} ref={scopeRef} /> 
-                            <div className="inline-block w-1/4 p-2">
-                                <VehicleSelectButton text="Teleop" handleClick={startupTeleop} refon={scopeRef} isLoading={teleopLoading} />
-                            </div>
-                        </div>
-                    </div>
-                    {/* <hr></hr> */}
-                    
-                    {/* list of gear in <select></select> 
-                        * Parking, Drive, Reverse, Neutral, Low
-                        */}
-                    <div className="row-span-1 col-span-1">
-                        <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Gear</label>
-                        <div className="flex">
-                            <StyleSelect options={["Parking", "Drive", "Reverse", "Neutral", "Low"]} ref={gearRef} />
-                            <div className="inline-block w-1/4 p-2">
-                                <TeleopButton text="Set" handleClick={setGear} scope={teleopScope} refon={gearRef} reftype="select" />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="row-span-1 col-span-1">
-                        <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Velocity</label>
-                        <div className="flex">
-                            <StyleTextArea placeHolder="km/hr" ref={velocityRef} />
-                            <div className="inline-block w-1/4 p-2">
-                                <TeleopButton text="Set" handleClick={setVelocity} scope={teleopScope} refon={velocityRef} reftype="textarea"/>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="row-span-1 col-span-1 flex justify-center items-center">
-                        <SteeringWheel rotation={rotation} onRotationChange={handleRotationChange} />
+            <div className="col-span-4 lg:col-span-3 h-full grid grid-rows-[3fr_7fr_10fr] gap-4 overflow-hidden pr-2 pb-2">
+                <div className="bg-gradient-to-br from-base-200 to-base-300 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-base-300/50 grid grid-rows-[auto_1fr] gap-2 h-full overflow-hidden">
+                    <h3 className="font-extrabold uppercase tracking-wider text-base-content/70">Vehicle Selection</h3>
+                    <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
+                        <VehicleSelect state={list} ref={scopeRef} />
+                        <VehicleSelectButton text="Teleop" refon={scopeRef} isLoading={teleopLoading} />
                     </div>
                 </div>
-            </TitleCard>
-        </>
-    )
+
+                <div className="bg-gradient-to-br from-base-200 to-base-300 backdrop-blur-sm px-4 py-2 rounded-2xl shadow-lg border border-base-300/50 grid grid-rows-[auto_1fr] gap-2 h-full overflow-hidden">
+                    <div className="grid grid-cols-[auto_1fr] gap-4 items-center justify-items-center">
+                        <div className="grid grid-rows-2 grid-cols-3 justify-items-center scale-95">
+                            <div className="col-start-2"><KeyBadge keyName="w" /></div>
+                            <div className="col-start-1"><KeyBadge keyName="a" /></div>
+                            <div className="col-start-2"><KeyBadge keyName="s" /></div>
+                            <div className="col-start-3"><KeyBadge keyName="d" /></div>
+                        </div>
+                        <div className="grid grid-rows-2 items-center">
+                            <h3 className="font-extrabold uppercase tracking-wider text-base-content/70">Key</h3>
+                            <h3 className="font-extrabold uppercase tracking-wider text-base-content/70">Controls</h3>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 w-full text-xs font-medium text-base-content/80 content-center">
+                        <div className="grid grid-cols-[auto_1fr] gap-2 items-center min-w-0">
+                            <KeyBadge keyName="z" width="w-7" onClick={() => triggerOneShot('z')} />
+                            <span className="truncate">Engage</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_1fr] gap-2 items-center min-w-0">
+                            <KeyBadge keyName="x" width="w-7" onClick={() => triggerOneShot('x')} />
+                            <span className="truncate">Drive</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_1fr] gap-2 items-center min-w-0">
+                            <KeyBadge keyName="c" width="w-7" onClick={() => triggerOneShot('c')} />
+                            <span className="truncate">Reverse</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_1fr] gap-2 items-center min-w-0">
+                            <KeyBadge keyName="v" width="w-7" onClick={() => triggerOneShot('v')} />
+                            <span className="truncate">Park</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_1fr] gap-2 items-center min-w-0">
+                            <KeyBadge keyName="m" width="w-7" onClick={() => triggerOneShot('m')} />
+                            <span className="truncate">Cycle Mode</span>
+                        </div>
+                        <div className="grid grid-cols-[auto_1fr] gap-2 items-center min-w-0">
+                            <KeyBadge keyName="r" width="w-7" onClick={() => triggerOneShot('r')} />
+                            <span className="truncate">Reset Pose</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-base-200 to-base-300 px-10 py-4 rounded-3xl shadow-xl border border-base-300/50 grid grid-cols-2 grid-rows-2 gap-4 h-full overflow-hidden">
+                    <div className="flex items-center justify-center">
+                        <SteeringWheel rotation={rotation} onRotationChange={setRotation} />
+                    </div>
+                    <div className="flex flex-col items-start justify-center px-1 min-w-0">
+                        <h3 className="font-extrabold uppercase tracking-wider text-base-content/70">Cockpit</h3>
+                        <p className="text-sm leading-snug text-base-content/60 mt-1">
+                            Drag the wheel to steer.<br />
+                            Hold the pedals for gas / brake.
+                        </p>
+                    </div>
+                    <button
+                        className={`w-full h-full rounded-3xl transition-all duration-200 select-none border backdrop-blur-md flex items-center justify-center ${pressedKeys.includes('s') ? 'bg-red-500/20 border-red-500/50 scale-95' : 'bg-base-100/40 border-base-content/10 shadow-xl'}`}
+                        onMouseDown={() => pressKey('s')}
+                        onMouseUp={() => releaseKey('s')}
+                        onMouseLeave={() => { if (pressedKeys.includes('s')) releaseKey('s'); }}
+                        onTouchStart={(e) => { e.preventDefault(); pressKey('s'); }}
+                        onTouchEnd={(e) => { e.preventDefault(); releaseKey('s'); }}
+                    >
+                        <span className={`font-medium tracking-widest text-xs uppercase ${pressedKeys.includes('s') ? 'text-red-500' : 'text-base-content/60'}`}>Brake</span>
+                    </button>
+                    <button
+                        className={`w-full h-full rounded-3xl transition-all duration-200 select-none border backdrop-blur-md flex items-center justify-center ${pressedKeys.includes('w') ? 'bg-emerald-500/20 border-emerald-500/50 scale-95' : 'bg-base-100/40 border-base-content/10 shadow-xl'}`}
+                        onMouseDown={() => pressKey('w')}
+                        onMouseUp={() => releaseKey('w')}
+                        onMouseLeave={() => { if (pressedKeys.includes('w')) releaseKey('w'); }}
+                        onTouchStart={(e) => { e.preventDefault(); pressKey('w'); }}
+                        onTouchEnd={(e) => { e.preventDefault(); releaseKey('w'); }}
+                    >
+                        <span className={`font-medium tracking-widest text-xs uppercase ${pressedKeys.includes('w') ? 'text-emerald-500' : 'text-base-content/60'}`}>Gas</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
-export default TeleopPnael
+export default TeleopPanel
