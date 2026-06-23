@@ -143,13 +143,13 @@ function TeleopPnael() {
                     </div>
                     {/* <hr></hr> */}
                     
-                    {/* list of gear in <select></select> 
-                        * Parking, Drive, Reverse, Neutral, Low
+                    {/* list of gear in <select></select>
+                        * Park, Drive, Reverse, Neutral, Low
                         */}
                     <div className="row-span-1 col-span-1">
                         <label className="block mb-2 text-lg font-medium text-gray-900 dark:text-white">Gear</label>
                         <div className="flex">
-                            <StyleSelect options={["Parking", "Drive", "Reverse", "Neutral", "Low"]} ref={gearRef} />
+                            <StyleSelect options={["Park", "Drive", "Reverse", "Neutral", "Low"]} ref={gearRef} />
                             <div className="inline-block w-1/4 p-2">
                                 <TeleopButton text="Set" handleClick={setGear} scope={teleopScope} refon={gearRef} reftype="select" />
                             </div>

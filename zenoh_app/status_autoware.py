@@ -1,10 +1,12 @@
 import time
 
 import zenoh
-from zenoh_ros_type.tier4_autoware_msgs import CpuStatus, CpuUsage, GearShift, TurnSignal, VehicleStatusStamped
+from zenoh_ros_type.autoware_adapi_msgs import Gear, TurnIndicators, VehicleKinematics, VehicleStatus
+from zenoh_ros_type.tier4_autoware_msgs import CpuStatus, CpuUsage
 
-GET_CPU_KEY_EXPR = '/api/external/get/cpu_usage'
-GET_VEHICLE_STATUS_KEY_EXPR = '/api/external/get/vehicle/status'
+GET_CPU_KEY_EXPR = '/system/system_monitor/cpu_monitor/cpu_usage'
+GET_VEHICLE_STATUS_KEY_EXPR = '/api/vehicle/status'
+GET_VEHICLE_KINEMATICS_KEY_EXPR = '/api/vehicle/kinematics'
 
 
 def class2dict(instance, built_dict={}):
@@ -52,14 +54,31 @@ def get_vehicle_status(session, scope, use_bridge_ros2dds=True):
     while vehicle_status_data is None:
         time.sleep(1)
         for rep in sub:
-            vehicle_status_data = VehicleStatusStamped.deserialize(rep.payload.to_bytes())
+            vehicle_status_data = VehicleStatus.deserialize(rep.payload.to_bytes())
             break
     ### Convert object to dictionary
     vehicle_status_data = class2dict(vehicle_status_data)
-    vehicle_status_data['status']['gear_shift']['data'] = GearShift.DATA(vehicle_status_data['status']['gear_shift']['data']).name
-    vehicle_status_data['status']['turn_signal']['data'] = TurnSignal.DATA(vehicle_status_data['status']['turn_signal']['data']).name
+    vehicle_status_data['gear']['status'] = Gear.STATUS(vehicle_status_data['gear']['status']).name
+    vehicle_status_data['turn_indicators']['status'] = TurnIndicators.STATUS(vehicle_status_data['turn_indicators']['status']).name
     print(vehicle_status_data)
     return vehicle_status_data
+
+
+def get_vehicle_kinematics(session, scope, use_bridge_ros2dds=True):
+    prefix = scope if use_bridge_ros2dds else scope + '/*'
+    postfix = '' if use_bridge_ros2dds else '/**'
+    kinematics_key_expr = prefix + GET_VEHICLE_KINEMATICS_KEY_EXPR + postfix
+    print(kinematics_key_expr, flush=True)
+    sub = session.declare_subscriber(kinematics_key_expr)
+    kinematics_data = None
+    while kinematics_data is None:
+        time.sleep(1)
+        for rep in sub:
+            kinematics_data = VehicleKinematics.deserialize(rep.payload.to_bytes())
+            break
+
+    kinematics_data = class2dict(kinematics_data)
+    return kinematics_data
 
 
 if __name__ == '__main__':
@@ -67,3 +86,4 @@ if __name__ == '__main__':
     session = zenoh.open(conf)
     get_cpu_status(session, 'v1')
     get_vehicle_status(session, 'v1')
+    get_vehicle_kinematics(session, 'v1')
