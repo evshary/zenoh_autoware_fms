@@ -1,48 +1,65 @@
-import json
+import time
+
+TELEMETRY_KEY_GLOB = 'manual_control/*/telemetry'
+# Presence = the latched initialization_state key: published at bringup,
+# before and independent of any teleop.
+PRESENCE_KEY_GLOB = '**/api/localization/initialization_state'
+LIVE_TIMEOUT = 3.0  # teleop telemetry is ~60 Hz; drop a scope this long unheard
+BRIDGE_LIVE_TIMEOUT = 3600.0  # latched key has no heartbeat; age out slowly
 
 
-def list_autoware(session, use_bridge_ros2dds=True, search_times=10):
-    ### uuid --> scope, address
-    agent_infos = {}
+class TeleopTracker:
+    """Liveness of vehicles = which teleops are publishing telemetry."""
 
-    ### Retrive scope from admin space of zenoh-bridge-dds
-    for _ in range(search_times):
-        if use_bridge_ros2dds:
-            replies = session.get('@/**/ros2/config')
-        else:
-            replies = session.get('@/**/config/**')
-        for reply in replies:
-            try:
-                key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.to_string())
+    def __init__(self, session):
+        self._seen = {}
+        self._sub = session.declare_subscriber(TELEMETRY_KEY_GLOB, self._on_sample)
 
-                if use_bridge_ros2dds:
-                    uuid = key_expr_.split('/')[1].lower()
-                    # Need to remove /
-                    scope = payload_['namespace'][1:]
-                else:
-                    uuid = payload_['routers'][0]
-                    scope = key_expr_.split('/')[4].lower()
+    def _on_sample(self, sample):
+        parts = str(sample.key_expr).lstrip('/').split('/')
+        if len(parts) < 2:
+            print(f'[TeleopTracker] ignoring sample with no scope segment: {sample.key_expr}')
+            return
+        scope = parts[1]
+        if scope:
+            self._seen[scope] = time.time()
 
-                if uuid not in agent_infos.keys():
-                    agent_infos[uuid] = {}
-                agent_infos[uuid]['scope'] = scope
-            except Exception as _e:
-                pass
+    def list(self):
+        now = time.time()
+        return [{'scope': s, 'address': f'teleop:{s}'}
+                for s, t in list(self._seen.items()) if now - t < LIVE_TIMEOUT]
 
-        ### Retrive ip from admin space of zenoh-bridge-dds
-        replies = session.get('@/**/session/**/link/**')
-        for reply in replies:
-            try:
-                key_expr_ = str(reply.ok.key_expr)
-                payload_ = json.loads(reply.ok.payload.to_string())
 
-                uuid = key_expr_.split('/')[5].lower()
-                address = payload_['dst']
+class BridgeTracker:
+    """Presence of vehicles = which bridges have forwarded AD-API to the FMS plane.
 
-                if uuid in agent_infos.keys():
-                    agent_infos[uuid]['address'] = address
-            except Exception as _e:
-                pass
+    ROS2-mode bridges declare no liveliness token, so a data key is the signal;
+    the startup query catches states latched before this session.
+    """
 
-    return list(agent_infos.values())
+    def __init__(self, session):
+        self._seen = {}
+        self._sub = session.declare_subscriber(PRESENCE_KEY_GLOB, self._on_sample)
+        try:
+            for reply in session.get(PRESENCE_KEY_GLOB):
+                scope = self._note(reply.sample)
+                if scope:
+                    print(f'[BridgeTracker] discovered via initial query: {scope}')
+        except Exception as e:  # presence recovers via the subscriber; logged
+            print(f'[BridgeTracker] initial presence query failed: {e}')
+
+    def _note(self, sample):
+        key = str(sample.key_expr).lstrip('/')
+        idx = key.find('/api/localization/initialization_state')
+        if idx <= 0:
+            return None
+        scope = key[:idx].split('/')[0]
+        self._seen[scope] = time.time()
+        return scope
+
+    def _on_sample(self, sample):
+        self._note(sample)
+
+    def list(self):
+        now = time.time()
+        return [s for s, t in list(self._seen.items()) if now - t < BRIDGE_LIVE_TIMEOUT]
