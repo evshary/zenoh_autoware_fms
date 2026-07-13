@@ -1,0 +1,63 @@
+{
+  mode: "peer",
+  // Port placeholder rendered per vehicle (7448 + ROS_DOMAIN_ID) so N
+  // host-networked bridges don't collide; the per-vehicle teleop connects
+  // here explicitly.
+  listen: { endpoints: ["tcp/0.0.0.0:__LISTEN_PORT__"] },
+  plugins: {
+    ros2dds: {
+      allow: {
+        publishers: [
+            // Vehicle commands the Carla bridge applies to the actor (DDS -> Zenoh)
+            "/control/command/actuation_cmd",
+            "/control/command/control_cmd",
+            "/control/command/gear_cmd",
+            "/control/current_gate_mode",
+            "/control/command/turn_indicators_cmd",
+            "/control/command/hazard_lights_cmd",
+            // Used by FMS / Teleop API (DDS -> Zenoh)
+            "/api/external/get/cpu_usage",
+            "/api/vehicle/kinematics",
+            "/api/routing/route",
+            "/api/operation_mode/state",
+            "/api/localization/initialization_state"
+        ],
+        subscribers: [
+            // Carla sensors + vehicle status delivered to Autoware (Zenoh -> DDS)
+            "/sensing/lidar/top/pointcloud",
+            "/sensing/imu/.*",
+            "/sensing/gnss/.*",
+            "/clock",
+            "/vehicle/status/actuation_status",
+            "/vehicle/status/velocity_status",
+            "/vehicle/status/steering_status",
+            "/vehicle/status/gear_status",
+            "/vehicle/status/turn_indicators_status",
+            "/vehicle/status/hazard_lights_status",
+            // Written by the native teleop (Zenoh -> DDS)
+            "/initialpose",
+            "/external/selected/gear_cmd",
+            "/external/selected/control_cmd",
+            "/external/remote/heartbeat",
+            "/external/local/heartbeat"
+        ],
+        service_servers: [
+            // Used by the native teleop
+            "/api/operation_mode/change_to_stop",
+            "/api/operation_mode/change_to_remote",
+            "/api/operation_mode/change_to_local",
+            "/api/operation_mode/enable_autoware_control"
+        ],
+        service_clients: [
+            "/all_ignore"
+        ],
+        action_servers: [
+            "/all_ignore"
+        ],
+        action_clients: [
+            "/all_ignore"
+        ],
+      }
+    }
+  }
+}
