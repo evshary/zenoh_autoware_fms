@@ -40,7 +40,7 @@ just down              # stop the stack
 
 ### Drive
 
-1. Open **http://localhost:3000** and go to **Remote Driving** in the sidebar.
+1. Open **<http://localhost:3000>** and go to **Remote Driving** in the sidebar.
 2. Pick your vehicle's scope (e.g. `v1`) in **Vehicle Selection** and click **Teleop** — this attaches the per-vehicle teleop.
 3. With the drive view focused, use the on-screen keys (or the keyboard):
 
@@ -60,7 +60,7 @@ The **Map View** tab shows each vehicle's pose/route on the lanelet map.
 
 Repeat `just up vehicle <scope>` with a fresh scope for each vehicle (`v2`, `v3`, …); each gets its own ego + Autoware and appears in the UI vehicle list. A scope must be a token: a letter followed by `[A-Za-z0-9_]*` (it becomes a container name, a Zenoh key, and a ROS namespace).
 
-https://github.com/user-attachments/assets/c60e629d-6b95-4899-a673-c82a51f002b6
+<video src="https://github.com/user-attachments/assets/c60e629d-6b95-4899-a673-c82a51f002b6" controls></video>
 
 Tear down one vehicle with `just down vehicle <scope>` (the rest stay up); `just down` stops everything.
 
