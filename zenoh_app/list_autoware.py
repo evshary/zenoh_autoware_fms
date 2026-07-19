@@ -1,3 +1,4 @@
+import threading
 import time
 
 TELEMETRY_KEY_GLOB = 'manual_control/*/telemetry'
@@ -13,6 +14,7 @@ class TeleopTracker:
 
     def __init__(self, session):
         self._seen = {}
+        self._lock = threading.Lock()  # _on_sample (zenoh thread) vs list() (request thread)
         self._sub = session.declare_subscriber(TELEMETRY_KEY_GLOB, self._on_sample)
 
     def _on_sample(self, sample):
@@ -22,12 +24,15 @@ class TeleopTracker:
             return
         scope = parts[1]
         if scope:
-            self._seen[scope] = time.time()
+            with self._lock:
+                self._seen[scope] = time.time()
 
     def list(self):
         now = time.time()
+        with self._lock:
+            items = list(self._seen.items())
         return [{'scope': s, 'address': f'teleop:{s}'}
-                for s, t in list(self._seen.items()) if now - t < LIVE_TIMEOUT]
+                for s, t in items if now - t < LIVE_TIMEOUT]
 
 
 class BridgeTracker:
@@ -39,12 +44,14 @@ class BridgeTracker:
 
     def __init__(self, session):
         self._seen = {}
+        self._lock = threading.Lock()  # _on_sample (zenoh thread) vs list() (request thread)
         self._sub = session.declare_subscriber(PRESENCE_KEY_GLOB, self._on_sample)
         try:
             for reply in session.get(PRESENCE_KEY_GLOB):
-                scope = self._note(reply.sample)
-                if scope:
-                    print(f'[BridgeTracker] discovered via initial query: {scope}')
+                if reply.ok is not None:
+                    scope = self._note(reply.ok)
+                    if scope:
+                        print(f'[BridgeTracker] discovered via initial query: {scope}')
         except Exception as e:  # presence recovers via the subscriber; logged
             print(f'[BridgeTracker] initial presence query failed: {e}')
 
@@ -54,7 +61,8 @@ class BridgeTracker:
         if idx <= 0:
             return None
         scope = key[:idx].split('/')[0]
-        self._seen[scope] = time.time()
+        with self._lock:
+            self._seen[scope] = time.time()
         return scope
 
     def _on_sample(self, sample):
@@ -62,4 +70,6 @@ class BridgeTracker:
 
     def list(self):
         now = time.time()
-        return [s for s, t in list(self._seen.items()) if now - t < BRIDGE_LIVE_TIMEOUT]
+        with self._lock:
+            items = list(self._seen.items())
+        return [s for s, t in items if now - t < BRIDGE_LIVE_TIMEOUT]

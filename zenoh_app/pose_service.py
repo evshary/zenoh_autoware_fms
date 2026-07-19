@@ -77,6 +77,13 @@ class VehiclePose:
     def engage(self):
         self.publisher_engage.put('{}')
 
+    def close(self):
+        for entity in (self.subscriber_pose, self.subscriber_goalPose, self.publisher_goal, self.publisher_engage):
+            try:
+                entity.undeclare()
+            except Exception as e:
+                print(f'[PoseService] undeclare failed for {self.scope}: {e}')
+
 
 class PoseServer:
     def __init__(self, session, tracker):
@@ -85,9 +92,13 @@ class PoseServer:
         self.vehicles = {}
 
     def findVehicles(self):
-        for scope in self.tracker.list():
+        present = set(self.tracker.list())
+        for scope in present:
             if scope not in self.vehicles:
                 self.vehicles[scope] = VehiclePose(self.session, scope)
+        # drop vehicles the tracker aged out, undeclaring their subs/pubs
+        for scope in [s for s in self.vehicles if s not in present]:
+            self.vehicles.pop(scope).close()
 
     def returnPose(self):
         return [{'name': scope, 'lat': v.lat, 'lon': v.lon} for scope, v in self.vehicles.items()]
