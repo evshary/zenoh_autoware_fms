@@ -117,14 +117,18 @@ async def manage_list_autoware():
     attached = {v['scope'] for v in teleop_tracker.list()}
     discovered = set(bridge_tracker.list())
     held = set(fleet.held_scopes())
-    return [
-        {'scope': s,
-         'state': 'ATTACHED' if s in attached else 'DISCOVERED',
-         'held': s in held,
-         'teleop': fleet.status(s),
-         'address': f'teleop:{s}' if s in attached else f'bridge:{s}'}
-        for s in sorted(attached | discovered | held)
-    ]
+
+    def entry(s):
+        if s in attached:
+            state, address = 'ATTACHED', f'teleop:{s}'
+        elif s in discovered:
+            state, address = 'DISCOVERED', f'bridge:{s}'
+        else:  # held only: FMS holds a teleop but the vehicle is gone from the plane
+            state, address = 'HELD', f'held:{s}'
+        return {'scope': s, 'state': state, 'held': s in held,
+                'teleop': fleet.status(s), 'address': address}
+
+    return [entry(s) for s in sorted(attached | discovered | held)]
 
 
 # plain def = FastAPI threadpool: blocking attach/map IO must not stall the loop

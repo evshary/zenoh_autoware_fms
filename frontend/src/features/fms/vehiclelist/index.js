@@ -66,7 +66,8 @@ function Lists() {
                                     <td>
                                         <span className={`badge font-semibold ${
                                             v.state === 'ATTACHED' ? 'badge-success text-white' :
-                                            v.state === 'DISCOVERED' ? 'badge-info text-white' : 'badge-ghost'
+                                            v.state === 'DISCOVERED' ? 'badge-info text-white' :
+                                            v.state === 'HELD' ? 'badge-warning text-white' : 'badge-ghost'
                                         }`}>
                                             {v.state || 'UNKNOWN'}
                                         </span>
