@@ -1,29 +1,27 @@
 #!/bin/bash
-# Fail fast: a swallowed failure here (uv sync, npm install, ...) would
-# otherwise surface only much later as a runtime crash. pipefail also
-# catches a failed download in `curl ... | sh`.
+# pipefail so a failed `curl ... | sh` isn't masked by the piped shell exiting 0.
 set -eo pipefail
 
-# Install packages (skip the sudo/apt round-trip when already present)
-command -v parallel >/dev/null 2>&1 || sudo apt-get install -y parallel
+# moreutils ships a different `parallel`; version-check to detect GNU specifically.
+parallel --version 2>/dev/null | grep -q GNU || sudo apt-get install -y parallel
+dpkg -s build-essential cmake libyaml-dev nlohmann-json3-dev >/dev/null 2>&1 \
+    || sudo apt-get install -y build-essential cmake libyaml-dev nlohmann-json3-dev
 
-# Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# Install Python packages
+export PATH="$HOME/.local/bin:$PATH"
 uv sync
+# uv tool venv needs colcon-core + extensions installed together.
+command -v colcon >/dev/null 2>&1 \
+    || uv tool install colcon-core --with colcon-common-extensions
 
-# Install nodejs
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-# nvm.sh is not written for `set -e`; source it leniently, then re-arm.
+# nvm.sh is not `set -e`-safe; source it leniently, then re-arm.
 set +e
 source "$HOME/.nvm/nvm.sh"
 set -e
 nvm install 21.7.3
-# Install npm
 pushd frontend
 npm install
-popd # frontend
+popd
 
-# Install necessary data
-## map
 ./download_map.sh

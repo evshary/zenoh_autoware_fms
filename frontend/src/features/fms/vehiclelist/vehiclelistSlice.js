@@ -6,6 +6,7 @@ export class Vehicle {
 		this.name = name
 		this.address = ""
 		this.status = ""
+		this.state = ""
 	}
 }
 
@@ -19,12 +20,12 @@ export const getListContent = createAsyncThunk('/vehicle/list', async () => {
                 var v = new Vehicle(element.scope)
                 v.address = element.address
                 v.status = response.data
+                v.state = element.state
                 vehiclelist.push(JSON.stringify(v))
              })
         promises.push(p)
     })
     await Promise.all(promises)
-    console.log("All vehicle list: ", vehiclelist)
 	return vehiclelist
 })
 

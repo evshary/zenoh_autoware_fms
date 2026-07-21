@@ -4,9 +4,8 @@
     link: {
       tx: {
         queue:{
-          /// Perform batching of messages if they are smaller of the batch_size
           batching: {
-            /// Default works well in most cases. If performance problems arise, remove the comment to disable batching.
+            // Uncomment to disable batching if performance problems arise.
             // enabled: false,
           }
         }
@@ -18,11 +17,11 @@
       'tcp/0.0.0.0:7887'
     ]
   },
-  /*
-  scouting: {
-    multicast: {
-      enabled: false,
-    },
-  }
-  */
+  // The sim bridge plane: the camera and other <scope>/sensing keys live there.
+  // Explicit connect so the link doesn't depend on discovery.
+  connect: {
+    endpoints: [
+      'tcp/localhost:7447'
+    ]
+  },
 }

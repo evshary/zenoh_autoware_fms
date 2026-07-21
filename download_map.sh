@@ -1,15 +1,9 @@
 #!/bin/bash
+set -e
 
 MAP_PATH="frontend/public/carla_map/Town01"
 
-# Install gdown
-pipx install -f gdown
-
-# If map doesn't exist
-if [ ! -d $MAP_PATH ]; then
-    echo "Download map from Internet..."
-    mkdir $MAP_PATH
-    gdown --fuzzy -O $MAP_PATH/lanelet2_map.osm https://drive.google.com/file/d/1vm9SvalJe7Bc9sh_8jK-0cPulVAov5uD/view
-    gdown --fuzzy -O $MAP_PATH/pointcloud_map.pcd https://drive.google.com/file/d/1MvJlfjkw3LWFUs5hdE_KQ2_CQTusU8UN/view
-    echo "Download complete"
-fi
+export PATH="$HOME/.local/bin:$PATH"
+mkdir -p "$MAP_PATH"
+[ -f "$MAP_PATH/lanelet2_map.osm" ] || uvx gdown -O "$MAP_PATH/lanelet2_map.osm" 1vm9SvalJe7Bc9sh_8jK-0cPulVAov5uD
+[ -f "$MAP_PATH/pointcloud_map.pcd" ] || uvx gdown -O "$MAP_PATH/pointcloud_map.pcd" 1MvJlfjkw3LWFUs5hdE_KQ2_CQTusU8UN

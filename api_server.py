@@ -1,19 +1,16 @@
 import asyncio
 import json
-import os
 
 import cv2
 import zenoh
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from zenoh_app.camera_autoware import MJPEG_server
-from zenoh_app.list_autoware import list_autoware
+from zenoh_app.fleet_manager import FleetManager, InvalidScope, validate_scope
+from zenoh_app.list_autoware import BridgeTracker, TeleopTracker
 from zenoh_app.pose_service import PoseServer
-from zenoh_app.status_autoware import get_cpu_status, get_vehicle_status
-
-MJPEG_HOST = '0.0.0.0'
-MJPEG_PORT = 5000
+from zenoh_app.status_autoware import get_vehicle_status, parse_cpu_usage
 
 app = FastAPI()
 app.add_middleware(
@@ -25,22 +22,88 @@ app.add_middleware(
 
 conf = zenoh.Config.from_file('config.json5')
 session = zenoh.open(conf)
-use_bridge_ros2dds = os.environ.get('USE_BRIDGE_ROS2DDS') == 'True'
-mjpeg_server = None
-pose_service = PoseServer(session, use_bridge_ros2dds)
 
-_intent_pub = session.declare_publisher('manual_control/v1/intent')
 
-_last_telemetry = {}
-
-def _on_telemetry(sample):
-    global _last_telemetry
+def _checked_scope(scope):
+    # Operator-supplied scope flows into zenoh keys, filenames and YAML, so
+    # reject anything but a tame token before it reaches any of them.
     try:
-        _last_telemetry = json.loads(sample.payload.to_bytes().decode('utf-8'))
-    except Exception:
-        pass
+        return validate_scope(scope)
+    except InvalidScope as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-_telemetry_sub = session.declare_subscriber('manual_control/v1/telemetry', _on_telemetry)
+
+async def _ws_scope(websocket, scope):
+    # WS twin of _checked_scope: policy-close instead of an HTTP 400.
+    try:
+        return validate_scope(scope)
+    except InvalidScope:
+        await websocket.close(code=1008)
+        return None
+
+
+class Scope:
+    """Per-scope server channels: intent pub, telemetry sub + cache, camera."""
+    def __init__(self, name, session):
+        self.last_telemetry = {}
+        self.last_cpu = None
+        self.intent_pub = session.declare_publisher(f'manual_control/{name}/intent')
+        self.telemetry_sub = session.declare_subscriber(
+            f'manual_control/{name}/telemetry', self._on_telemetry)
+        self.cpu_sub = session.declare_subscriber(
+            f'{name}/api/external/get/cpu_usage', self._on_cpu)
+        # lazy: an attached-but-unwatched scope spins no decode thread
+        self._session = session
+        self._name = name
+        self._mjpeg = None
+
+    @property
+    def mjpeg(self):
+        if self._mjpeg is None:
+            self._mjpeg = MJPEG_server(self._session, self._name)
+        return self._mjpeg
+
+    def _on_telemetry(self, sample):
+        try:
+            self.last_telemetry = json.loads(sample.payload.to_bytes().decode('utf-8'))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            print(f'[API SERVER] dropping malformed telemetry sample: {e}')
+
+    def _on_cpu(self, sample):
+        # parse at receipt: one bad sample must not 500 /status
+        try:
+            self.last_cpu = parse_cpu_usage(sample.payload.to_bytes())
+        except Exception as e:
+            print(f'[API SERVER] dropping malformed cpu sample: {e}')
+
+
+class ScopeRegistry:
+    def __init__(self, session):
+        self._session = session
+        self._scopes = {}
+
+    def get(self, name):
+        if name not in self._scopes:
+            self._scopes[name] = Scope(name, self._session)
+        return self._scopes[name]
+
+
+scopes = ScopeRegistry(session)
+teleop_tracker = TeleopTracker(session)
+bridge_tracker = BridgeTracker(session)
+fleet = FleetManager(bridge_tracker)
+pose_service = PoseServer(session, bridge_tracker)
+
+
+@app.on_event('startup')
+async def _start_fleet_supervision():
+    fleet.start()
+
+
+@app.on_event('shutdown')
+async def _stop_fleet_supervision():
+    # Off the loop: stopping teleops blocks up to their term grace.
+    await asyncio.to_thread(fleet.shutdown)
 
 
 @app.get('/')
@@ -50,12 +113,38 @@ async def root():
 
 @app.get('/list')
 async def manage_list_autoware():
-    return list_autoware(session, use_bridge_ros2dds)
+    # held (FMS owns a teleop) stays listed with presence dropped, so the zombie is detachable
+    attached = {v['scope'] for v in teleop_tracker.list()}
+    discovered = set(bridge_tracker.list())
+    held = set(fleet.held_scopes())
+
+    def entry(s):
+        if s in attached:
+            state, address = 'ATTACHED', f'teleop:{s}'
+        elif s in discovered:
+            state, address = 'DISCOVERED', f'bridge:{s}'
+        else:  # held only: FMS holds a teleop but the vehicle is gone from the plane
+            state, address = 'HELD', f'held:{s}'
+        return {'scope': s, 'state': state, 'held': s in held,
+                'teleop': fleet.status(s), 'address': address}
+
+    return [entry(s) for s in sorted(attached | discovered | held)]
+
+
+# plain def = FastAPI threadpool: blocking attach/map IO must not stall the loop
+# (frozen WS = frozen deadman intent)
+@app.post('/fleet/attach')
+def fleet_attach(scope: str):
+    return fleet.attach(_checked_scope(scope))
+
+
+@app.post('/fleet/detach')
+def fleet_detach(scope: str):
+    return fleet.detach(_checked_scope(scope))
 
 
 @app.get('/zenoh/has-subscriber')
 async def zenoh_has_subscriber(key: str):
-    # True if any subscriber currently matches `key`.
     pub = session.declare_publisher(key)
     try:
         return {'matching': bool(pub.matching_status.matching)}
@@ -64,107 +153,98 @@ async def zenoh_has_subscriber(key: str):
 
 
 @app.get('/status/{scope}')
-async def manage_status_autoware(scope):
-    return {'cpu': get_cpu_status(session, scope, use_bridge_ros2dds), 'vehicle': get_vehicle_status(session, scope, use_bridge_ros2dds)}
+async def manage_status_autoware(scope: str):
+    sc = scopes.get(_checked_scope(scope))
+    return {'cpu': sc.last_cpu, 'vehicle': get_vehicle_status(sc.last_telemetry)}
 
 
 @app.websocket('/video')
-async def handle_ws(websocket: WebSocket):
+async def handle_ws(websocket: WebSocket, scope: str = 'v1'):
     await websocket.accept()
-    global mjpeg_server
-
+    scope = await _ws_scope(websocket, scope)
+    if scope is None:
+        return
+    mjpeg = scopes.get(scope).mjpeg
     try:
         while True:
-            if mjpeg_server is None or mjpeg_server.camera_image is None:
+            if mjpeg.camera_image is None:
                 await asyncio.sleep(2)
             else:
-                # Encode the frame as JPEG
-                _, buffer = cv2.imencode('.jpg', mjpeg_server.camera_image)
-                frame_bytes = buffer.tobytes()
-                await websocket.send_bytes(frame_bytes)
+                _, buffer = cv2.imencode('.jpg', mjpeg.camera_image)
+                await websocket.send_bytes(buffer.tobytes())
                 await asyncio.sleep(0.1)
     except WebSocketDisconnect:
         pass
 
 
 @app.websocket('/telemetry/stream')
-async def telemetry_stream(websocket: WebSocket):
+async def telemetry_stream(websocket: WebSocket, scope: str = 'v1'):
     await websocket.accept()
+    scope = await _ws_scope(websocket, scope)
+    if scope is None:
+        return
+    s = scopes.get(scope)
     try:
         while True:
-            await websocket.send_json(_last_telemetry)
-            await asyncio.sleep(0.1)  # 10Hz
+            await websocket.send_json(s.last_telemetry)
+            await asyncio.sleep(0.1)
     except WebSocketDisconnect:
         pass
 
 
 @app.get('/teleop/startup')
-async def manage_teleop_startup(scope: str = 'v1'):
-    """Start the camera stream; zenoh_control owns control and engage."""
-    global mjpeg_server
-    if mjpeg_server is not None:
-        mjpeg_server.change_vehicle(scope)
-    else:
-        mjpeg_server = MJPEG_server(session, scope, use_bridge_ros2dds)
-    return {
-        'text': f'Startup manual control on {scope}.',
-        'mjpeg_host': 'localhost' if MJPEG_HOST == '0.0.0.0' else MJPEG_HOST,
-        'mjpeg_port': MJPEG_PORT,
-    }
+def manage_teleop_startup(scope: str = 'v1'):
+    scope = _checked_scope(scope)
+    status = fleet.attach(scope)
+    scopes.get(scope)  # prime channels (side effect)
+    return status
 
 
 @app.websocket('/teleop/intent/ws')
-async def handle_intent_ws(websocket: WebSocket):
+async def handle_intent_ws(websocket: WebSocket, scope: str = 'v1'):
     await websocket.accept()
+    scope = await _ws_scope(websocket, scope)
+    if scope is None:
+        return
+    intent_pub = scopes.get(scope).intent_pub
     try:
         while True:
             data = await websocket.receive_text()
-            _intent_pub.put(data)
+            intent_pub.put(data)
     except WebSocketDisconnect:
         pass
 
 
 @app.get('/map/list')
-async def get_vehilcle_list():
-    global pose_service
+def get_vehicle_list():
     pose_service.findVehicles()
     return list(pose_service.vehicles.keys())
 
 
 @app.get('/map/pose')
-async def get_vehicle_pose():
-    global pose_service
-    if pose_service is not None:
-        return pose_service.returnPose()
-    else:
-        return []
+def get_vehicle_pose():
+    return pose_service.returnPose()
 
 
 @app.get('/map/goalPose')
-async def get_vehicle_goalpose():
-    global pose_service
-    if pose_service is not None:
-        return pose_service.returnGoalPose()
-    else:
-        return []
+def get_vehicle_goalpose():
+    return pose_service.returnGoalPose()
 
 
 @app.get('/map/setGoal')
-async def set_goal_pose(scope, lat, lon):
-    global pose_service
-    if pose_service is not None:
-        print(f'[API SERVER] Set Goal Pose of {scope} as (lat={lat}, lon={lon})')
-        pose_service.setGoal(scope, lat, lon)
-        return 'success'
-    else:
-        return 'fail'
+def set_goal_pose(scope: str, lat: float, lon: float):
+    scope = _checked_scope(scope)
+    if scope not in pose_service.vehicles:
+        raise HTTPException(status_code=404, detail=f'unknown scope: {scope}')
+    print(f'[API SERVER] Set Goal Pose of {scope} as (lat={lat}, lon={lon})')
+    pose_service.setGoal(scope, lat, lon)
+    return 'success'
 
 
 @app.get('/map/engage')
-async def set_engage(scope):
-    global pose_service
-    if pose_service is not None:
-        pose_service.engage(scope)
-        return 'success'
-    else:
-        return 'fail'
+def set_engage(scope: str):
+    scope = _checked_scope(scope)
+    if scope not in pose_service.vehicles:
+        raise HTTPException(status_code=404, detail=f'unknown scope: {scope}')
+    pose_service.engage(scope)
+    return 'success'

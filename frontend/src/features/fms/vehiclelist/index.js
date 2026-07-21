@@ -30,6 +30,7 @@ function Lists() {
     const isLoading = useSelector(state => state.list.isLoading)
     const {list} = useSelector(state => state.list)
     const dispatch = useDispatch()
+
     useEffect(() => {
         dispatch(getListContent())
     }, [dispatch])
@@ -37,13 +38,13 @@ function Lists() {
     return(
         <>
             <TitleCard title="Vehicles" topMargin="mt-2" TopSideButtons={<Refresh isLoading={isLoading} />}>
-            {/* Vehicle list after api call */}
             <div className="overflow-x-auto w-full">
                 <table className="table w-full">
                     <thead>
                     <tr>
                         <th>Name</th>
-                        <th>IP address</th>
+                        <th>Source</th>
+                        <th>State</th>
                         <th>CPU Overview</th>
                         <th>Vehicle Status</th>
                     </tr>
@@ -63,16 +64,25 @@ function Lists() {
                                     </td>
                                     <td>{v.address}</td>
                                     <td>
-                                        idle: {v.status.cpu.all.idle}  <br/>
-                                        used: {v.status.cpu.all.total} <br/>
-                                        system: {v.status.cpu.all.sys} <br/>
-                                        user: {v.status.cpu.all.usr}   <br/>
+                                        <span className={`badge font-semibold ${
+                                            v.state === 'ATTACHED' ? 'badge-success text-white' :
+                                            v.state === 'DISCOVERED' ? 'badge-info text-white' :
+                                            v.state === 'HELD' ? 'badge-warning text-white' : 'badge-ghost'
+                                        }`}>
+                                            {v.state || 'UNKNOWN'}
+                                        </span>
                                     </td>
                                     <td>
-                                        Turn: {v.status.vehicle.status.turn_signal.data}<br/>
-                                        Gear: {v.status.vehicle.status.gear_shift.data}<br/>
-                                        Steering: {v.status.vehicle.status.steering.data}<br/>
-                                        Velocity: {v.status.vehicle.status.twist.linear.x}<br/>
+                                        idle: {v.status?.cpu?.all?.idle ?? 'N/A'}  <br/>
+                                        used: {v.status?.cpu?.all?.total ?? 'N/A'} <br/>
+                                        system: {v.status?.cpu?.all?.sys ?? 'N/A'} <br/>
+                                        user: {v.status?.cpu?.all?.usr ?? 'N/A'}   <br/>
+                                    </td>
+                                    <td>
+                                        Turn: {v.status?.vehicle?.status?.turn_signal?.data ?? 'N/A'}<br/>
+                                        Gear: {v.status?.vehicle?.status?.gear_shift?.data ?? 'N/A'}<br/>
+                                        Steering: {v.status?.vehicle?.status?.steering?.data ?? 'N/A'}<br/>
+                                        Velocity: {v.status?.vehicle?.status?.twist?.linear?.x ?? 'N/A'}<br/>
                                     </td>
                                     </tr>
                                 )
